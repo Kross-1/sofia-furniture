@@ -109,6 +109,7 @@ export function SiteDataProvider({ children }: { children: ReactNode }) {
   }, [siteData, isLoading, isInitialized]);
 
   const addProduct = async (product: Omit<Product, 'id'>) => {
+    console.log('addProduct called:', product);
     const newId = Math.max(0, ...siteData.products.map(p => p.id)) + 1;
     const newProduct = { ...product, id: newId } as Product;
     
@@ -118,7 +119,9 @@ export function SiteDataProvider({ children }: { children: ReactNode }) {
     }));
 
     try {
+      console.log('Saving to Supabase...', product);
       await saveProduct(product);
+      console.log('Saved to Supabase successfully');
     } catch (e) {
       console.error('Error saving to Supabase:', e);
     }
