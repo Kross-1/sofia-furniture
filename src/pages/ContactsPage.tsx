@@ -48,8 +48,7 @@ export default function ContactsPage() {
 
   const exteriorImage = getMedia('contacts_exterior');
 
-  const mapUrl =
-    'https://yandex.ru/map-widget/v1/?text=Махачкала%2C+просп.+Амет-хана+Султана%2C+256%2C+стр.+24';
+  
 
   const handlePhoneClick = (displayNumber: string) => {
     trackPhoneClick(displayNumber, 'Страница контактов');
@@ -169,7 +168,16 @@ export default function ContactsPage() {
 
           <div className="flex flex-col">
             <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden flex-1 min-h-[400px] lg:min-h-0">
-              <script type="text/javascript" charset="utf-8" async src="https://api-maps.yandex.ru/services/constructor/1.0/js/?um=constructor%3Ab0f6bdba1bf40e61eb94b3385213c766d1d00889f4b9b4a464485f23875b0b5b&width=500&height=400&lang=ru_RU&scroll=true" />
+              <iframe
+                src="https://api-maps.yandex.ru/services/constructor/1.0/js/?um=constructor%3Ab0f6bdba1bf40e61eb94b3385213c766d1d00889f4b9b4a464485f23875b0b5b&width=500&height=400&lang=ru_RU&scroll=true"
+                width="100%"
+                height="100%"
+                frameBorder="0"
+                title={getText('contacts-map-title')}
+                allowFullScreen
+                className="w-full h-full"
+                style={{ border: 0 }}
+              />
             </div>
           </div>
         </div>
