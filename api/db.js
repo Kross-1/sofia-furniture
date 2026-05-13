@@ -5,30 +5,40 @@ const connString = process.env.DATABASE_URL || '';
 const sql = connString ? neon(connString) : null;
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  if (!sql) {
-    return res.json({ error: 'DATABASE_URL not set' }, { status: 500 });
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
   }
 
-  const { method } = req;
+  if (!sql) {
+    return res.status(500).json({ error: 'DATABASE_URL not set', conn: connString ? 'set' : 'empty' });
+  }
 
-  if (method === 'GET') {
+  if (req.method === 'GET') {
     const table = (req.query.table as string) || '';
-    const page = req.query.page as string;
 
     try {
+      if (table === 'Category') {
+        const rows = await sql`SELECT * FROM "Category" ORDER BY "sortOrder"`;
+        return res.status(200).json(rows);
+      }
       if (table === 'MediaItem') {
+        const page = req.query.page as string;
         const rows = page
           ? await sql`SELECT * FROM "MediaItem" WHERE page = ${page} ORDER BY "createdAt" DESC`
           : await sql`SELECT * FROM "MediaItem" ORDER BY "createdAt" DESC`;
-        return res.json(rows);
+        return res.status(200).json(rows);
       }
       if (table === 'Message') {
         const rows = await sql`SELECT * FROM "Message" ORDER BY "createdAt" DESC`;
-        return res.json(rows);
+        return res.status(200).json(rows);
       }
       if (table === 'SiteSetting') {
         const rows = await sql`SELECT * FROM "SiteSetting"`;
-        return res.json(rows);
+        return res.status(200).json(rows);
       }
       if (table === 'Product') {
         const rows = await sql`
@@ -37,27 +47,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           LEFT JOIN "Category" c ON p."categoryId" = c.id
           ORDER BY c."sortOrder", p.name
         `;
-        return res.json(rows);
+        return res.status(200).json(rows);
       }
-      if (table === 'Category') {
-        const rows = await sql`SELECT * FROM "Category" ORDER BY "sortOrder"`;
-        return res.json(rows);
-      }
-      if (table === 'User') {
-        const rows = await sql`SELECT * FROM "User"`;
-        return res.json(rows);
-      }
-      return res.json({ error: 'Unknown table' }, { status: 400 });
+      return res.status(400).json({ error: `Unknown table: ${table}` });
     } catch (e: unknown) {
-      return res.json({ error: (e as Error).message }, { status: 500 });
+      return res.status(500).json({ error: (e as Error).message });
     }
   }
 
-  if (method === 'POST') {
-    const body = req.body;
-    const { table, ...values } = body;
+  if (req.method === 'POST') {
+    const { table, ...values } = req.body || {};
 
-    if (!table) return res.json({ error: 'Missing table' }, { status: 400 });
+    if (!table) return res.status(400).json({ error: 'Missing table' });
 
     try {
       if (table === 'Message') {
@@ -66,7 +67,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           VALUES (${values.name}, ${values.phone}, ${values.comment || null}, ${values.product || null}, 'new', NOW())
           RETURNING *
         `;
-        return res.json(result[0]);
+        return res.status(201).json(result[0]);
       }
       if (table === 'SiteSetting') {
         const result = await sql`
@@ -75,13 +76,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           ON CONFLICT (key) DO UPDATE SET value = ${values.value}
           RETURNING *
         `;
-        return res.json(result[0]);
+        return res.status(201).json(result[0]);
       }
-      return res.json({ error: 'Unknown table' }, { status: 400 });
+      return res.status(400).json({ error: `Unknown table: ${table}` });
     } catch (e: unknown) {
-      return res.json({ error: (e as Error).message }, { status: 500 });
+      return res.status(500).json({ error: (e as Error).message });
     }
   }
 
-  return res.json({ error: 'Method not allowed' }, { status: 405 });
+  return res.status(405).json({ error: 'Method not allowed' });
 }

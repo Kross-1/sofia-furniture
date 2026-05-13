@@ -2,13 +2,5 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "installCommand": "npm install",
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
-  ],
-  "cleanUrls": true,
-  "functions": {
-    "api/db/index.ts": {
-      "runtime": "nodejs22.x"
-    }
-  }
+  "cleanUrls": true
 }
