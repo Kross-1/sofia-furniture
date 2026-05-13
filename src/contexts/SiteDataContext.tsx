@@ -1,6 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Product } from '../data/products';
-import { usePageContent } from '../hooks/usePageContent';
 import { getProducts, addProduct, updateProductDB, deleteProductDB } from '../lib/db';
 
 const defaultMaterials = [
@@ -24,15 +23,12 @@ interface SiteDataContextType {
   addMaterial: (material: string) => void;
   updateContent: (page: string, section: string, key: string, value: string) => Promise<void>;
   resetData: () => void;
+  reloadProducts: () => Promise<void>;
 }
 
 const SiteDataContext = createContext<SiteDataContextType | undefined>(undefined);
 
-const STORAGE_KEY = 'sofia_furniture_data';
-
 export function SiteDataProvider({ children }: { children: ReactNode }) {
-  const { getEnabledProductCategories } = usePageContent();
-
   const [siteData, setSiteData] = useState<SiteData>({
     products: [],
     materials: defaultMaterials,
@@ -45,42 +41,14 @@ export function SiteDataProvider({ children }: { children: ReactNode }) {
     async function loadData() {
       try {
         setIsLoading(true);
-        console.log('Loading from Vercel Postgres...');
-        
         const productsData = await getProducts();
-        console.log('Products from DB:', productsData);
-
-        const stored = localStorage.getItem(STORAGE_KEY);
-        let savedProducts = [];
-        
-        if (stored) {
-          try {
-            const parsed = JSON.parse(stored);
-            savedProducts = parsed.products || [];
-          } catch {}
-        }
-
-        const finalProducts = productsData.length > 0 ? productsData : savedProducts;
-
         setSiteData({
-          products: finalProducts as Product[],
+          products: productsData as Product[],
           materials: defaultMaterials,
           content: {},
         });
-
-        try {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify({
-            products: finalProducts,
-            materials: defaultMaterials,
-            content: {}
-          }));
-        } catch {}
       } catch (e) {
-        console.error('Error loading data:', e);
-        const stored = localStorage.getItem(STORAGE_KEY);
-        if (stored) {
-          try { setSiteData(JSON.parse(stored)); } catch {}
-        }
+        console.error('Error loading data from DB:', e);
       } finally {
         setIsLoading(false);
         setIsInitialized(true);
@@ -90,26 +58,25 @@ export function SiteDataProvider({ children }: { children: ReactNode }) {
     if (!isInitialized) loadData();
   }, [isInitialized]);
 
-  useEffect(() => {
-    if (!isLoading && isInitialized) {
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(siteData));
-      } catch {}
+  const reloadProducts = async () => {
+    try {
+      const productsData = await getProducts();
+      setSiteData(prev => ({ ...prev, products: productsData as Product[] }));
+    } catch (e) {
+      console.error('Error reloading products:', e);
     }
-  }, [siteData, isLoading, isInitialized]);
+  };
 
   const addProductHandler = async (product: Omit<Product, 'id'>) => {
-    console.log('Adding product:', product);
     try {
       const newProduct = await addProduct(product);
-      console.log('Product added:', newProduct);
       setSiteData(prev => ({
         ...prev,
         products: [...prev.products, newProduct as Product]
       }));
     } catch (e) {
       console.error('Error adding product:', e);
-      const newId = Math.max(0, ...siteData.products.map(p => p.id)) + 1;
+      const newId = Math.max(0, ...siteData.products.map(p => typeof p.id === 'number' ? p.id : 0)) + 1;
       const newProduct = { ...product, id: newId } as Product;
       setSiteData(prev => ({
         ...prev,
@@ -165,7 +132,6 @@ export function SiteDataProvider({ children }: { children: ReactNode }) {
 
   const resetData = () => {
     setSiteData({ products: [], materials: defaultMaterials, content: {} });
-    localStorage.removeItem(STORAGE_KEY);
   };
 
   return (
@@ -179,7 +145,8 @@ export function SiteDataProvider({ children }: { children: ReactNode }) {
       deleteProduct: deleteProductHandler,
       addMaterial,
       updateContent,
-      resetData
+      resetData,
+      reloadProducts,
     }}>
       {children}
     </SiteDataContext.Provider>
