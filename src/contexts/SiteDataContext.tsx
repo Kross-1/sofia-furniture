@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 import { Product, products as defaultProducts } from '../data/products';
 import { usePageContent } from '../hooks/usePageContent';
 import { Category } from '../data/products';
-import { fetchSiteContent, saveSiteContent, fetchProducts, saveProduct, updateProduct, deleteProduct as deleteProductDB } from '../lib/supabase';
+import { fetchSiteContent, saveSiteContent, fetchProducts, saveProduct, updateProduct as updateProductDB, deleteProduct as deleteProductDB } from '../lib/supabase';
 
 const defaultMaterials = [
   'Дерево',
@@ -147,7 +147,7 @@ export function SiteDataProvider({ children }: { children: ReactNode }) {
     }));
 
     try {
-      await updateProduct(id, updates);
+      await updateProductDB(id, updates);
     } catch (e) {
       console.error('Error updating in Supabase:', e);
     }
