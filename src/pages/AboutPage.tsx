@@ -1,6 +1,7 @@
 import { Check, Heart, Star, Users } from 'lucide-react';
 import { usePageContent } from '../hooks/usePageContent';
 import { useEffect, useState } from 'react';
+import { getMediaItems } from '../lib/db';
 
 const features = [
   { icon: Heart, titleKey: 'about-adv-style', descKey: 'about-adv-style-desc' },
@@ -16,14 +17,6 @@ interface MediaItem {
   label: string;
   value: string;
   type: 'image' | 'video';
-}
-
-function loadMediaItems(): Record<string, MediaItem[]> {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) return JSON.parse(saved);
-  } catch {}
-  return {};
 }
 
 function ImageBlock({ src, alt }: { src: string; alt: string }) {
@@ -57,7 +50,20 @@ export default function AboutPage() {
   const [media, setMedia] = useState<Record<string, MediaItem[]>>({});
 
   useEffect(() => {
-    const load = () => setMedia(loadMediaItems());
+    const load = async () => {
+      try {
+        const items = await getMediaItems('about');
+        setMedia({ about: items.map((item: any) => ({
+          key: item.section,
+          label: item.section,
+          value: item.url,
+          type: item.type || 'image',
+        }))});
+      } catch {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) setMedia(JSON.parse(saved));
+      }
+    };
     load();
     const interval = setInterval(load, 2000);
     return () => clearInterval(interval);

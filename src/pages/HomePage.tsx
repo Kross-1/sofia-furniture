@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { usePageContent } from '../hooks/usePageContent';
 import { useEffect, useState, useRef } from 'react';
+import { getMediaItems } from '../lib/db';
 
 const heroImage = `data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1920 1080' preserveAspectRatio='xMidYMid slice'><defs><linearGradient id='g' x1='0' x2='0' y1='0' y2='1'><stop offset='0' stop-color='%23E8DDD4'/><stop offset='1' stop-color='%23BFAA94'/></linearGradient></defs><rect width='1920' height='1080' fill='url(%23g)'/><rect x='100' y='400' width='400' height='250' rx='15' fill='%235D4E3A'/><rect x='150' y='420' width='300' height='180' rx='10' fill='%238B7355'/><rect x='700' y='350' width='500' height='300' rx='20' fill='%235D4E3A'/><rect x='750' y='380' width='400' height='220' rx='15' fill='%238B7355'/><rect x='1420' y='450' width='400' height='200' rx='10' fill='%23A88B7D'/></svg>`;
 
@@ -20,14 +21,6 @@ interface MediaItem {
   description: string;
   value: string;
   type?: 'image' | 'video';
-}
-
-function loadMediaItems(): Record<string, MediaItem[]> {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) return JSON.parse(saved);
-  } catch {}
-  return {};
 }
 
 function VideoBackground({ src }: { src: string }) {
@@ -57,7 +50,21 @@ export default function HomePage() {
   const [media, setMedia] = useState<Record<string, MediaItem[]>>({});
 
   useEffect(() => {
-    const load = () => setMedia(loadMediaItems());
+    const load = async () => {
+      try {
+        const items = await getMediaItems('home');
+        setMedia({ home: items.map((item: any) => ({
+          key: item.section,
+          label: item.section,
+          description: '',
+          value: item.url,
+          type: item.type || 'image',
+        }))});
+      } catch {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) setMedia(JSON.parse(saved));
+      }
+    };
     load();
     const interval = setInterval(load, 2000);
     return () => clearInterval(interval);

@@ -64,10 +64,17 @@ export default async function handler(req, res) {
 
       if (t === 'Message') {
         const rows = await q(
-          `INSERT INTO "Message" (name, phone, comment, product, status, "createdAt") VALUES ($1, $2, $3, $4, 'new', NOW()) RETURNING *`,
-          [values.name, values.phone, values.comment || null, values.product || null]
+          `INSERT INTO "Message" (name, phone, comment, product, status, "createdAt") VALUES ($1, $2, $3, $4, $5, NOW()) RETURNING *`,
+          [values.name, values.phone, values.comment || null, values.product || null, values.status || 'new']
         );
         return res.status(201).json(rows[0]);
+      }
+      if (t === 'Message_update') {
+        const rows = await q(
+          `UPDATE "Message" SET status = $2 WHERE id = $1 RETURNING *`,
+          [values.id, values.status]
+        );
+        return res.status(200).json(rows[0]);
       }
       if (t === 'SiteSetting') {
         const rows = await q(
@@ -76,7 +83,33 @@ export default async function handler(req, res) {
         );
         return res.status(201).json(rows[0]);
       }
+      if (t === 'MediaItem') {
+        const rows = await q(
+          `INSERT INTO "MediaItem" (page, section, type, url, "createdAt") VALUES ($1, $2, $3, $4, NOW()) RETURNING *`,
+          [values.page, values.section, values.type, values.url]
+        );
+        return res.status(201).json(rows[0]);
+      }
+      if (t === 'Product') {
+        const rows = await q(
+          `INSERT INTO "Product" (name, "categoryId", price, image, images, videos, material, description) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
+          [values.name, values.categoryId, values.price, values.image || '', values.images || [], values.videos || [], values.material || null, values.description || null]
+        );
+        return res.status(201).json(rows[0]);
+      }
       return res.status(400).json({ error: `Unknown table: ${t}` });
+    }
+
+    if (req.method === 'DELETE') {
+      const t = req.query.table;
+      const id = req.query.id;
+      if (!t || !id) return res.status(400).json({ error: 'Missing table or id' });
+
+      if (t === 'Message' || t === 'MediaItem') {
+        await q(`DELETE FROM "${t}" WHERE id = $1`, [id]);
+        return res.status(200).json({ success: true });
+      }
+      return res.status(400).json({ error: `Cannot delete from: ${t}` });
     }
 
     return res.status(405).json({ error: 'Method not allowed' });

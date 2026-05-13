@@ -1,8 +1,10 @@
+import { useState, useEffect } from 'react';
 import { Package, FileText, Users, MessageSquare, ArrowUpRight, Eye, Phone, BarChart3 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useSiteData } from '../../contexts/SiteDataContext';
 import { usePageContent } from '../../hooks/usePageContent';
 import { useAnalytics } from '../../contexts/AnalyticsContext';
+import { getMessages } from '../../lib/db';
 
 export default function DashboardPage() {
   const { products } = useSiteData();
@@ -11,23 +13,25 @@ export default function DashboardPage() {
 
   const categoriesCount = getEnabledProductCategories().length;
 
-  const messagesCount = (() => {
-    try {
-      const messages = JSON.parse(localStorage.getItem('sofia_messages') || '[]');
-      return messages.length;
-    } catch {
-      return 0;
-    }
-  })();
+  const [messagesCount, setMessagesCount] = useState(0);
+  const [newMessagesCount, setNewMessagesCount] = useState(0);
 
-  const newMessagesCount = (() => {
-    try {
-      const messages = JSON.parse(localStorage.getItem('sofia_messages') || '[]');
-      return messages.filter((m: any) => m.status === 'new').length;
-    } catch {
-      return 0;
-    }
-  })();
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const data = await getMessages();
+        setMessagesCount(data.length);
+        setNewMessagesCount(data.filter((m: any) => m.status === 'new').length);
+      } catch {
+        try {
+          const messages = JSON.parse(localStorage.getItem('sofia_messages') || '[]');
+          setMessagesCount(messages.length);
+          setNewMessagesCount(messages.filter((m: any) => m.status === 'new').length);
+        } catch {}
+      }
+    };
+    load();
+  }, []);
 
   const todayVisitors = analytics.visitors.filter((v) => {
     const visitDate = new Date(v.timestamp);

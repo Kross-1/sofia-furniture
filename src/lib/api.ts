@@ -12,54 +12,26 @@ async function fetchAPI(endpoint: string, options?: RequestInit) {
   return res.json();
 }
 
-function getCategoryId(categoryName: string): string {
-  const map: Record<string, string> = {
-    'Спальные гарнитуры': '1b5f4171-72f7-495c-9da6-a68c2485d577',
-    'ТВ тумбы': '980af499-5151-48e6-acbe-7ac9a0b8cdc0',
-    'Консоли': 'e10123b4-e724-4cb8-940e-52cee03a4956',
-    'Столы': 'fd30f952-4fe5-47c7-a2db-5afac550ddef',
-    'Стулья': 'd7560113-5da3-4ad0-bc1d-92e7198c74d5',
-    'Холлы': '5be7b0fb-3326-4ea2-be42-c37085b11cf7',
-    'Диваны': '4b0beeca-988c-4207-a2bf-e25e18675491',
-  };
-  return map[categoryName] || map['Спальные гарнитуры'];
-}
-
 export async function getProducts(): Promise<any[]> {
-  const products = await fetchAPI('?table=Product');
-  // map UUIDs back to numeric IDs for compatibility
-  return products.map((p: any, i: number) => ({
-    ...p,
-    id: p.id || i + 1,
-    category: p.category || '',
-  }));
+  return fetchAPI('?table=Product');
 }
 
 export async function addProduct(product: any): Promise<any> {
-  const body = {
-    table: 'Product',
-    name: product.name,
-    categoryId: product.categoryId || getCategoryId(product.category || ''),
-    price: Number(product.price) || 0,
-    image: product.image || '',
-    images: product.images || [],
-    videos: product.videos || [],
-    material: product.material || null,
-    description: product.description || null,
-  };
-  const result = await fetchAPI('', { method: 'POST', body: JSON.stringify(body) });
-  return { ...result, id: result.id || Date.now(), category: product.category || '' };
-}
-
-export async function updateProductDB(id: number | string, updates: any): Promise<any> {
   return fetchAPI('', {
     method: 'POST',
-    body: JSON.stringify({ table: 'Product', id: String(id), ...updates }),
+    body: JSON.stringify({ table: 'Product', ...product }),
   });
 }
 
-export async function deleteProductDB(id: number | string): Promise<void> {
-  await fetchAPI(`?table=Product&id=${id}`, { method: 'DELETE' });
+export async function updateProduct(id: string, updates: any): Promise<any> {
+  return fetchAPI('', {
+    method: 'POST',
+    body: JSON.stringify({ table: 'Product', id, ...updates }),
+  });
+}
+
+export async function deleteProduct(id: string): Promise<void> {
+  return fetchAPI(`?table=Product&id=${id}`, { method: 'DELETE' });
 }
 
 export async function getMediaItems(page?: string): Promise<any[]> {
@@ -75,7 +47,7 @@ export async function saveMediaItem(page: string, section: string, type: string,
 }
 
 export async function deleteMediaItem(id: string): Promise<void> {
-  await fetchAPI(`?table=MediaItem&id=${id}`, { method: 'DELETE' });
+  return fetchAPI(`?table=MediaItem&id=${id}`, { method: 'DELETE' });
 }
 
 export async function getMessages(): Promise<any[]> {
@@ -92,12 +64,12 @@ export async function saveMessage(name: string, phone: string, comment?: string,
 export async function updateMessageStatus(id: string, status: string): Promise<any> {
   return fetchAPI('', {
     method: 'POST',
-    body: JSON.stringify({ table: 'Message_update', id, status }),
+    body: JSON.stringify({ table: 'Message', id, status }),
   });
 }
 
 export async function deleteMessage(id: string): Promise<void> {
-  await fetchAPI(`?table=Message&id=${id}`, { method: 'DELETE' });
+  return fetchAPI(`?table=Message&id=${id}`, { method: 'DELETE' });
 }
 
 export async function getSiteSettings(): Promise<any[]> {

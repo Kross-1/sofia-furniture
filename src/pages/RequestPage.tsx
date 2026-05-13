@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { Send, CheckCircle, AlertCircle, Phone, X, ShoppingBag } from 'lucide-react';
 import { usePageContent } from '../hooks/usePageContent';
 import { useSiteData } from '../contexts/SiteDataContext';
+import { saveMessage } from '../lib/db';
 
 interface FormData {
   name: string;
@@ -82,6 +83,9 @@ export default function RequestPage() {
       messages.pop();
     }
     localStorage.setItem(MESSAGES_STORAGE_KEY, JSON.stringify(messages));
+
+    const productInfo = product ? `${product.name} (${product.price} ₽)` : undefined;
+    saveMessage(data.name, data.phone, data.comment || undefined, productInfo).catch(() => {});
 
     const notificationEmail = localStorage.getItem('sofia_contact_email') || 'info@sofia.ru';
     console.log(`Email notification would be sent to: ${notificationEmail}`);
