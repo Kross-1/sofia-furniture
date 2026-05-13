@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Product, products as defaultProducts } from '../data/products';
+import { Product } from '../data/products';
 import { usePageContent } from '../hooks/usePageContent';
 import { Category } from '../data/products';
 import { fetchSiteContent, saveSiteContent, fetchProducts, saveProduct, updateProduct as updateProductDB, deleteProduct as deleteProductDB } from '../lib/supabase';
@@ -78,31 +78,17 @@ export function SiteDataProvider({ children }: { children: ReactNode }) {
         }
 
         setSiteData({
-          products: productsData.length > 0 ? productsData : defaultProducts,
+          products: productsData,
           materials: defaultMaterials,
           content,
         });
-
-        const stored = localStorage.getItem(STORAGE_KEY);
-        if (stored) {
-          try {
-            const localData = JSON.parse(stored);
-            if (productsData.length === 0 && localData.products) {
-              setSiteData(prev => ({ ...prev, products: localData.products }));
-            }
-            if (Object.keys(content).length === 0 && localData.content) {
-              setSiteData(prev => ({ ...prev, content: localData.content }));
-            }
-          } catch {}
-        }
       } catch (e) {
         console.error('Error loading from Supabase:', e);
-        const stored = localStorage.getItem(STORAGE_KEY);
-        if (stored) {
-          try {
-            setSiteData(JSON.parse(stored));
-          } catch {}
-        }
+        setSiteData({
+          products: [],
+          materials: defaultMaterials,
+          content: {},
+        });
       } finally {
         setIsLoading(false);
         setIsInitialized(true);
