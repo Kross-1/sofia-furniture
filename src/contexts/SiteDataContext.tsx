@@ -1,7 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Product } from '../data/products';
 import { usePageContent } from '../hooks/usePageContent';
-import { getProducts, addProduct, updateProductDB, deleteProductDB } from '../lib/db';
 
 const defaultMaterials = [
   'Дерево', 'МДФ', 'ДСП', 'Металл', 'Ткань', 'Кожа', 'Шерсть', 'Вискоза', 'Велюр', 'Замша',
@@ -29,6 +28,7 @@ interface SiteDataContextType {
 const SiteDataContext = createContext<SiteDataContextType | undefined>(undefined);
 
 const STORAGE_KEY = 'sofia_furniture_data';
+const API_BASE = '/api/products';
 
 export function SiteDataProvider({ children }: { children: ReactNode }) {
   const { getEnabledProductCategories } = usePageContent();
@@ -41,14 +41,50 @@ export function SiteDataProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [isInitialized, setIsInitialized] = useState(false);
 
+  const fetchProducts = async () => {
+    try {
+      const response = await fetch(API_BASE);
+      if (!response.ok) throw new Error('Failed to fetch');
+      return await response.json();
+    } catch (e) {
+      console.error('Error fetching products:', e);
+      return [];
+    }
+  };
+
+  const addProductAPI = async (product: any) => {
+    const response = await fetch(API_BASE, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(product)
+    });
+    if (!response.ok) throw new Error('Failed to add');
+    return await response.json();
+  };
+
+  const updateProductAPI = async (id: number, updates: any) => {
+    const response = await fetch(API_BASE, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, ...updates })
+    });
+    if (!response.ok) throw new Error('Failed to update');
+    return await response.json();
+  };
+
+  const deleteProductAPI = async (id: number) => {
+    const response = await fetch(`${API_BASE}?id=${id}`, { method: 'DELETE' });
+    if (!response.ok) throw new Error('Failed to delete');
+  };
+
   useEffect(() => {
     async function loadData() {
       try {
         setIsLoading(true);
-        console.log('Loading from Vercel Postgres...');
+        console.log('Loading from API...');
         
-        const productsData = await getProducts();
-        console.log('Products from DB:', productsData);
+        const productsData = await fetchProducts();
+        console.log('Products from API:', productsData);
 
         const stored = localStorage.getItem(STORAGE_KEY);
         let savedProducts = [];
@@ -101,7 +137,7 @@ export function SiteDataProvider({ children }: { children: ReactNode }) {
   const addProductHandler = async (product: Omit<Product, 'id'>) => {
     console.log('Adding product:', product);
     try {
-      const newProduct = await addProduct(product);
+      const newProduct = await addProductAPI(product);
       console.log('Product added:', newProduct);
       setSiteData(prev => ({
         ...prev,
@@ -120,7 +156,7 @@ export function SiteDataProvider({ children }: { children: ReactNode }) {
 
   const updateProductHandler = async (id: number, updates: Partial<Product>) => {
     try {
-      await updateProductDB(id, updates);
+      await updateProductAPI(id, updates);
       setSiteData(prev => ({
         ...prev,
         products: prev.products.map(p => p.id === id ? { ...p, ...updates } : p)
@@ -136,7 +172,7 @@ export function SiteDataProvider({ children }: { children: ReactNode }) {
 
   const deleteProductHandler = async (id: number) => {
     try {
-      await deleteProductDB(id);
+      await deleteProductAPI(id);
       setSiteData(prev => ({
         ...prev,
         products: prev.products.filter(p => p.id !== id)
