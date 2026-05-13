@@ -62,11 +62,14 @@ export function SiteDataProvider({ children }: { children: ReactNode }) {
     async function loadData() {
       try {
         setIsLoading(true);
+        console.log('Loading from Supabase...');
         
         const [contentData, productsData] = await Promise.all([
-          fetchSiteContent().catch(() => []),
-          fetchProducts().catch(() => [])
+          fetchSiteContent().catch((e) => { console.error('fetchSiteContent error:', e); return []; }),
+          fetchProducts().catch((e) => { console.error('fetchProducts error:', e); return []; })
         ]);
+        
+        console.log('Products from DB:', productsData);
 
         const content: Record<string, Record<string, string>> = {};
         for (const item of contentData) {
