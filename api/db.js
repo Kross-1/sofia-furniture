@@ -2,7 +2,7 @@ import pg from 'pg';
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
   res.setHeader('Content-Type', 'application/json');
 
@@ -91,11 +91,25 @@ export default async function handler(req, res) {
         return res.status(201).json(rows[0]);
       }
       if (t === 'Product') {
-        const rows = await q(
-          `INSERT INTO "Product" (name, "categoryId", price, image, images, videos, material, description) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
-          [values.name, values.categoryId, values.price, values.image || '', values.images || [], values.videos || [], values.material || null, values.description || null]
-        );
-        return res.status(201).json(rows[0]);
+        let categoryId = values.categoryId;
+        if (!categoryId && values.category) {
+          const catRows = await q(`SELECT id FROM "Category" WHERE name = $1`, [values.category]);
+          if (catRows[0]) categoryId = catRows[0].id;
+        }
+
+        if (values.id) {
+          const rows = await q(
+            `UPDATE "Product" SET name = $2, "categoryId" = $3, price = $4, image = $5, images = $6, videos = $7, material = $8, description = $9 WHERE id = $1 RETURNING *`,
+            [values.id, values.name, categoryId, values.price, values.image || '', values.images || [], values.videos || [], values.material || null, values.description || null]
+          );
+          return res.status(200).json(rows[0] || {});
+        } else {
+          const rows = await q(
+            `INSERT INTO "Product" (name, "categoryId", price, image, images, videos, material, description) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
+            [values.name, categoryId, values.price, values.image || '', values.images || [], values.videos || [], values.material || null, values.description || null]
+          );
+          return res.status(201).json(rows[0]);
+        }
       }
       if (t === 'seed_products') {
         const cats = [
@@ -148,7 +162,7 @@ export default async function handler(req, res) {
       const id = req.query.id;
       if (!t || !id) return res.status(400).json({ error: 'Missing table or id' });
 
-      if (t === 'Message' || t === 'MediaItem') {
+      if (t === 'Message' || t === 'MediaItem' || t === 'Product') {
         await q(`DELETE FROM "${t}" WHERE id = $1`, [id]);
         return res.status(200).json({ success: true });
       }
