@@ -3,31 +3,48 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = 'https://cblbgliuzbeobjiqsend.supabase.co';
 const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNibGJnbGl1emJlb2JqaXFzZW5kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2NTI4NjIsImV4cCI6MjA5NDIyODg2Mn0.ojPtNYjsOcIEUl3_IYtTC6IkvkEQt1dlpsSPXNSgbRk';
 
-async function fetchWithRetry(url: string, options: RequestInit, retries = 3): Promise<Response> {
-  for (let i = 0; i < retries; i++) {
+async function fetchWithRetry(url: string, options: any, retries = 3) {
+  for (let attempt = 0; attempt < retries; attempt++) {
     try {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 30000);
+      const timeoutId = setTimeout(() => controller.abort(), 45000);
       
       const response = await fetch(url, {
         ...options,
-        signal: controller.signal
+        signal: controller.signal,
+        headers: {
+          ...options.headers,
+          'apikey': supabaseAnonKey,
+          'Authorization': `Bearer ${supabaseAnonKey}`
+        }
       });
       
-      clearTimeout(timeout);
+      clearTimeout(timeoutId);
+      
+      if (!response.ok && attempt < retries - 1) {
+        console.log(`Request failed (attempt ${attempt + 1}), retrying...`);
+        await new Promise(r => setTimeout(r, 3000));
+        continue;
+      }
+      
       return response;
     } catch (error: any) {
-      console.log(`Attempt ${i + 1} failed:`, error.message);
-      if (i === retries - 1) throw error;
-      await new Promise(r => setTimeout(r, 2000));
+      console.log(`Attempt ${attempt + 1} failed:`, error.message || error.name);
+      if (attempt < retries - 1) {
+        await new Promise(r => setTimeout(r, 3000));
+      } else {
+        throw error;
+      }
     }
   }
-  throw new Error('Max retries reached');
 }
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   global: {
-    fetch: fetchWithRetry
+    fetch: (url, options) => fetchWithRetry(url, options || {})
+  },
+  realtime: {
+    enabled: false
   }
 });
 
@@ -93,9 +110,14 @@ export async function saveSiteContent(page: string, section: string, key: string
 }
 
 export async function fetchProducts(): Promise<Product[]> {
-  const { data, error } = await supabase.from('products').select('*').order('id');
-  if (error) throw error;
-  return data || [];
+  try {
+    const { data, error } = await supabase.from('products').select('*').order('id');
+    if (error) throw error;
+    return data || [];
+  } catch (e) {
+    console.error('fetchProducts error:', e);
+    return [];
+  }
 }
 
 export async function saveProduct(product: Omit<Product, 'id' | 'created_at' | 'updated_at'>): Promise<Product> {
