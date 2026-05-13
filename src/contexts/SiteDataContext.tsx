@@ -44,7 +44,7 @@ export function SiteDataProvider({ children }: { children: ReactNode }) {
   const { getEnabledProductCategories } = usePageContent();
 
   const [siteData, setSiteData] = useState<SiteData>({
-    products: defaultProducts,
+    products: [],
     materials: defaultMaterials,
     content: {},
   });
@@ -182,7 +182,7 @@ export function SiteDataProvider({ children }: { children: ReactNode }) {
 
   const resetData = () => {
     const defaultData = {
-      products: defaultProducts,
+      products: [],
       materials: defaultMaterials,
       content: {},
     };
