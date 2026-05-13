@@ -1,7 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Product } from '../data/products';
 import { usePageContent } from '../hooks/usePageContent';
-import { getProducts, addProduct, updateProductDB, deleteProductDB } from '../lib/db';
 
 const defaultMaterials = [
   'Дерево', 'МДФ', 'ДСП', 'Металл', 'Ткань', 'Кожа', 'Шерсть', 'Вискоза', 'Велюр', 'Замша',
@@ -45,13 +44,21 @@ export function SiteDataProvider({ children }: { children: ReactNode }) {
     async function loadData() {
       try {
         setIsLoading(true);
-        console.log('Loading from Vercel Postgres...');
+        console.log('Loading data...');
         
-        const productsData = await getProducts();
-        console.log('Products from DB:', productsData);
+        // Load from JSON file
+        let productsFromFile: Product[] = [];
+        try {
+          const response = await fetch('/data.json');
+          if (response.ok) {
+            const data = await response.json();
+            productsFromFile = data.products || [];
+          }
+        } catch {}
 
+        // Get from localStorage
         const stored = localStorage.getItem(STORAGE_KEY);
-        let savedProducts = [];
+        let savedProducts: Product[] = [];
         
         if (stored) {
           try {
@@ -60,10 +67,11 @@ export function SiteDataProvider({ children }: { children: ReactNode }) {
           } catch {}
         }
 
-        const finalProducts = productsData.length > 0 ? productsData : savedProducts;
+        // Use saved products if available, otherwise use file products
+        const finalProducts = savedProducts.length > 0 ? savedProducts : productsFromFile;
 
         setSiteData({
-          products: finalProducts as Product[],
+          products: finalProducts,
           materials: defaultMaterials,
           content: {},
         });
@@ -77,10 +85,6 @@ export function SiteDataProvider({ children }: { children: ReactNode }) {
         } catch {}
       } catch (e) {
         console.error('Error loading data:', e);
-        const stored = localStorage.getItem(STORAGE_KEY);
-        if (stored) {
-          try { setSiteData(JSON.parse(stored)); } catch {}
-        }
       } finally {
         setIsLoading(false);
         setIsInitialized(true);
@@ -99,55 +103,26 @@ export function SiteDataProvider({ children }: { children: ReactNode }) {
   }, [siteData, isLoading, isInitialized]);
 
   const addProductHandler = async (product: Omit<Product, 'id'>) => {
-    console.log('Adding product:', product);
-    try {
-      const newProduct = await addProduct(product);
-      console.log('Product added:', newProduct);
-      setSiteData(prev => ({
-        ...prev,
-        products: [...prev.products, newProduct as Product]
-      }));
-    } catch (e) {
-      console.error('Error adding product:', e);
-      const newId = Math.max(0, ...siteData.products.map(p => p.id)) + 1;
-      const newProduct = { ...product, id: newId } as Product;
-      setSiteData(prev => ({
-        ...prev,
-        products: [...prev.products, newProduct]
-      }));
-    }
+    const newId = Math.max(0, ...siteData.products.map(p => p.id)) + 1;
+    const newProduct = { ...product, id: newId } as Product;
+    setSiteData(prev => ({
+      ...prev,
+      products: [...prev.products, newProduct]
+    }));
   };
 
   const updateProductHandler = async (id: number, updates: Partial<Product>) => {
-    try {
-      await updateProductDB(id, updates);
-      setSiteData(prev => ({
-        ...prev,
-        products: prev.products.map(p => p.id === id ? { ...p, ...updates } : p)
-      }));
-    } catch (e) {
-      console.error('Error updating product:', e);
-      setSiteData(prev => ({
-        ...prev,
-        products: prev.products.map(p => p.id === id ? { ...p, ...updates } : p)
-      }));
-    }
+    setSiteData(prev => ({
+      ...prev,
+      products: prev.products.map(p => p.id === id ? { ...p, ...updates } : p)
+    }));
   };
 
   const deleteProductHandler = async (id: number) => {
-    try {
-      await deleteProductDB(id);
-      setSiteData(prev => ({
-        ...prev,
-        products: prev.products.filter(p => p.id !== id)
-      }));
-    } catch (e) {
-      console.error('Error deleting product:', e);
-      setSiteData(prev => ({
-        ...prev,
-        products: prev.products.filter(p => p.id !== id)
-      }));
-    }
+    setSiteData(prev => ({
+      ...prev,
+      products: prev.products.filter(p => p.id !== id)
+    }));
   };
 
   const addMaterial = (material: string) => {

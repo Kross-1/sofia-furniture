@@ -1,0 +1,7 @@
+{
+  "products": [
+    { "id": 1, "name": "Тестовый товар 1", "category": "ТВ тумбы", "price": 25000, "image": "", "material": "МДФ", "description": "Добавлено" },
+    { "id": 2, "name": "Диван раскладной", "category": "Диваны", "price": 89000, "image": "", "material": "Ткань", "description": "Мягкий диван" },
+    { "id": 3, "name": "Спальный гарнитур", "category": "Спальные гарнитуры", "price": 125000, "image": "", "material": "Дерево", "description": "Элегантный гарнитур" }
+  ]
+}
