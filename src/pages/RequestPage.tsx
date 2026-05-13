@@ -47,7 +47,7 @@ export default function RequestPage() {
   const productId = searchParams.get('product');
   const selectedProduct = useMemo(() => {
     if (!productId) return null;
-    return products.find(p => p.id === productId) || null;
+    return products.find(p => String(p.id) === productId) || null;
   }, [productId, products]);
 
   const formatPrice = (price: number) => {
