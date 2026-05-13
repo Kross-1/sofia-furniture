@@ -1,5 +1,7 @@
-import { sql } from '@vercel/postgres';
+import { neon } from '@neondatabase/serverless';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+
+const sql = neon(process.env.DATABASE_URL || '');
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   const { method } = req;
@@ -13,27 +15,27 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const q = page
           ? sql`SELECT * FROM "MediaItem" WHERE page = ${page} ORDER BY "createdAt" DESC`
           : sql`SELECT * FROM "MediaItem" ORDER BY "createdAt" DESC`;
-        return res.json((await q).rows);
+        return res.json(await q);
       }
       if (table === 'Message') {
-        return res.json((await sql`SELECT * FROM "Message" ORDER BY "createdAt" DESC`).rows);
+        return res.json(await sql`SELECT * FROM "Message" ORDER BY "createdAt" DESC`);
       }
       if (table === 'SiteSetting') {
-        return res.json((await sql`SELECT * FROM "SiteSetting"`).rows);
+        return res.json(await sql`SELECT * FROM "SiteSetting"`);
       }
       if (table === 'Product') {
-        return res.json((await sql`
+        return res.json(await sql`
           SELECT p.*, c.name as category, c.icon
           FROM "Product" p
           LEFT JOIN "Category" c ON p."categoryId" = c.id
           ORDER BY c."sortOrder", p.name
-        `).rows);
+        `);
       }
       if (table === 'Category') {
-        return res.json((await sql`SELECT * FROM "Category" ORDER BY "sortOrder"`).rows);
+        return res.json(await sql`SELECT * FROM "Category" ORDER BY "sortOrder"`);
       }
       if (table === 'User') {
-        return res.json((await sql`SELECT * FROM "User"`).rows);
+        return res.json(await sql`SELECT * FROM "User"`);
       }
       return res.json({ error: 'Unknown table' }, { status: 400 });
     } catch (e: unknown) {
@@ -49,21 +51,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     try {
       if (table === 'Message') {
-        const result = (await sql`
+        const result = await sql`
           INSERT INTO "Message" (name, phone, comment, product, status, "createdAt")
           VALUES (${values.name}, ${values.phone}, ${values.comment || null}, ${values.product || null}, 'new', NOW())
           RETURNING *
-        `).rows[0];
-        return res.json(result);
+        `;
+        return res.json(result[0]);
       }
       if (table === 'SiteSetting') {
-        const result = (await sql`
+        const result = await sql`
           INSERT INTO "SiteSetting" (id, key, value)
           VALUES (gen_random_uuid(), ${values.key}, ${values.value})
           ON CONFLICT (key) DO UPDATE SET value = ${values.value}
           RETURNING *
-        `).rows[0];
-        return res.json(result);
+        `;
+        return res.json(result[0]);
       }
       return res.json({ error: 'Unknown table' }, { status: 400 });
     } catch (e: unknown) {
