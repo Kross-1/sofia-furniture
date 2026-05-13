@@ -3,7 +3,12 @@
   "outputDirectory": "dist",
   "installCommand": "npm install",
   "rewrites": [
-    { "source": "/api/db", "destination": "/api/db.js" },
     { "source": "/(.*)", "destination": "/index.html" }
-  ]
+  ],
+  "cleanUrls": true,
+  "functions": {
+    "api/db/index.ts": {
+      "runtime": "nodejs22.x"
+    }
+  }
 }
