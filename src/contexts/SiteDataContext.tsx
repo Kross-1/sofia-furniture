@@ -77,18 +77,54 @@ export function SiteDataProvider({ children }: { children: ReactNode }) {
           content[item.page][item.key] = item.value;
         }
 
+        const stored = localStorage.getItem('sofia_furniture_data');
+        let savedProducts = [];
+        let savedContent = {};
+        
+        if (stored) {
+          try {
+            const parsed = JSON.parse(stored);
+            savedProducts = parsed.products || [];
+            savedContent = parsed.content || {};
+          } catch {}
+        }
+
+        const finalProducts = productsData.length > 0 ? productsData : savedProducts;
+        const finalContent = Object.keys(content).length > 0 ? content : savedContent;
+
         setSiteData({
-          products: productsData,
+          products: finalProducts,
           materials: defaultMaterials,
-          content,
+          content: finalContent,
         });
+
+        try {
+          localStorage.setItem('sofia_furniture_data', JSON.stringify({
+            products: finalProducts,
+            materials: defaultMaterials,
+            content: finalContent
+          }));
+        } catch {}
       } catch (e) {
         console.error('Error loading from Supabase:', e);
-        setSiteData({
-          products: [],
-          materials: defaultMaterials,
-          content: {},
-        });
+        const stored = localStorage.getItem('sofia_furniture_data');
+        if (stored) {
+          try {
+            setSiteData(JSON.parse(stored));
+          } catch {
+            setSiteData({
+              products: [],
+              materials: defaultMaterials,
+              content: {},
+            });
+          }
+        } else {
+          setSiteData({
+            products: [],
+            materials: defaultMaterials,
+            content: {},
+          });
+        }
       } finally {
         setIsLoading(false);
         setIsInitialized(true);
