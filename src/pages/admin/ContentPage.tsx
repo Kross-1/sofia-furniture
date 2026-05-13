@@ -1,6 +1,7 @@
-﻿import { useState, useRef, useCallback } from 'react';
+﻿import { useState, useRef, useCallback, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Home, FileText, Phone, Save, Image as ImageIcon, Upload, X, Link2, CheckCircle2, Film } from 'lucide-react';
+import { getMediaItems, saveMediaItem, deleteMediaItem } from '../../lib/db';
 
 type PageSection = 'home' | 'about' | 'contacts';
 
@@ -30,7 +31,7 @@ const defaultBackgroundData: Record<PageSection, MediaItem[]> = {
 
 const STORAGE_KEY = 'sofia_media_items';
 
-const loadMediaItems = (): Record<PageSection, MediaItem[]> => {
+const loadFromStorage = (): Record<PageSection, MediaItem[]> => {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
@@ -50,8 +51,22 @@ const loadMediaItems = (): Record<PageSection, MediaItem[]> => {
   return defaultBackgroundData;
 };
 
-const saveMediaItems = (data: Record<PageSection, MediaItem[]>) => {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+const loadMediaItems = async (): Promise<Record<PageSection, MediaItem[]>> => {
+  try {
+    const sections: PageSection[] = ['home', 'about', 'contacts'];
+    const result: Record<PageSection, MediaItem[]> = {} as Record<PageSection, MediaItem[]>;
+    for (const section of sections) {
+      const apiItems = await getMediaItems(section);
+      const defaults = defaultBackgroundData[section];
+      result[section] = defaults.map((def) => {
+        const found = apiItems.find((a: any) => a.section === def.key);
+        return found ? { ...def, value: found.url, type: found.type || def.type } : def;
+      });
+    }
+    return result;
+  } catch {
+    return loadFromStorage();
+  }
 };
 
 const sections = [
@@ -416,9 +431,13 @@ export default function ContentPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const initialSection = (searchParams.get('section') as PageSection) || 'home';
   const [activeSection, setActiveSection] = useState<PageSection>(initialSection);
-  const [mediaItems, setMediaItems] = useState(loadMediaItems);
+  const [mediaItems, setMediaItems] = useState<Record<PageSection, MediaItem[]>>(defaultBackgroundData);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+
+  useEffect(() => {
+    loadMediaItems().then(setMediaItems);
+  }, []);
 
   const handleSectionChange = (section: PageSection) => {
     setActiveSection(section);
@@ -445,7 +464,22 @@ export default function ContentPage() {
 
   const handleSave = async () => {
     setIsSaving(true);
-    saveMediaItems(mediaItems);
+    try {
+      const existingItems = await getMediaItems(activeSection);
+      for (const item of existingItems) {
+        if (item.id) {
+          await deleteMediaItem(item.id);
+        }
+      }
+    } catch {}
+    try {
+      for (const item of mediaItems[activeSection]) {
+        if (item.value) {
+          await saveMediaItem(activeSection, item.key, item.type || 'image', item.value);
+        }
+      }
+    } catch {}
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(mediaItems));
     await new Promise((resolve) => setTimeout(resolve, 500));
     setIsSaving(false);
     setSaveSuccess(true);

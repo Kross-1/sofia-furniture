@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Phone, MapPin, Clock, Mail } from 'lucide-react';
 import { useAnalytics } from '../contexts/AnalyticsContext';
 import { usePageContent } from '../hooks/usePageContent';
+import { getMediaItems } from '../lib/db';
 
 const STORAGE_KEY = 'sofia_media_items';
 
@@ -13,21 +14,22 @@ interface MediaItem {
   type?: 'image' | 'video';
 }
 
-function loadMediaItems(): Record<string, MediaItem[]> {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) return JSON.parse(saved);
-  } catch {}
-  return {};
-}
-
 export default function ContactsPage() {
   const { trackPhoneClick } = useAnalytics();
   const { getText } = usePageContent();
   const [media, setMedia] = useState<Record<string, MediaItem[]>>({});
 
   useEffect(() => {
-    const load = () => setMedia(loadMediaItems());
+    const load = async () => {
+      const items = await getMediaItems('contacts');
+      setMedia({ contacts: items.map((item: any) => ({
+        key: item.section,
+        label: item.section,
+        description: '',
+        value: item.url,
+        type: item.type || 'image',
+      }))});
+    };
     load();
     const interval = setInterval(load, 2000);
     return () => clearInterval(interval);
@@ -40,9 +42,6 @@ export default function ContactsPage() {
   };
 
   const exteriorImage = getMedia('contacts_exterior');
-
-  const mapUrl =
-    'https://yandex.ru/map-widget/v1/?text=Махачкала%2C+просп.+Амет-хана+Султана%2C+256%2C+стр.+24';
 
   const handlePhoneClick = (displayNumber: string) => {
     trackPhoneClick(displayNumber, 'Страница контактов');
@@ -163,7 +162,7 @@ export default function ContactsPage() {
           <div className="flex flex-col">
             <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden flex-1 min-h-[400px] lg:min-h-0">
               <iframe
-                src={mapUrl}
+                src="https://yandex.ru/map-widget/v1/?z=12&ol=biz&oid=230037220228"
                 width="100%"
                 height="100%"
                 frameBorder="0"
@@ -176,7 +175,6 @@ export default function ContactsPage() {
           </div>
         </div>
 
-        {/* Exterior Image Banner */}
         {exteriorImage ? (
           <div className="rounded-2xl overflow-hidden border border-border shadow-lg">
             <img

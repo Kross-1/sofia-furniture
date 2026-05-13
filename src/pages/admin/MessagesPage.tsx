@@ -1,5 +1,6 @@
 ﻿import { useState, useEffect } from 'react';
 import { MessageSquare, Phone, User, Calendar, Trash2, CheckCircle, Eye, Filter, Package } from 'lucide-react';
+import { getMessages, updateMessageStatus, deleteMessage as deleteMessageAPI } from '../../lib/db';
 
 interface Message {
   id: string;
@@ -19,11 +20,28 @@ export default function MessagesPage() {
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
 
   useEffect(() => {
-    // Load messages from localStorage
-    const saved = localStorage.getItem('sofia_messages');
-    if (saved) {
-      setMessages(JSON.parse(saved));
-    }
+    const load = async () => {
+      try {
+        const data = await getMessages();
+        setMessages(data.map((msg: any) => ({
+          id: msg.id,
+          name: msg.name,
+          phone: msg.phone,
+          comment: msg.comment || '',
+          date: msg.createdAt || msg.date || new Date().toISOString(),
+          status: msg.status || 'new',
+          productId: msg.productId,
+          productName: msg.productName,
+          productPrice: msg.productPrice,
+        })));
+      } catch {
+        const saved = localStorage.getItem('sofia_messages');
+        if (saved) {
+          setMessages(JSON.parse(saved));
+        }
+      }
+    };
+    load();
   }, []);
 
   const filteredMessages = messages.filter(msg => {
@@ -32,6 +50,7 @@ export default function MessagesPage() {
   }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
   const markAsRead = (id: string) => {
+    updateMessageStatus(id, 'read').catch(() => {});
     setMessages(prev => {
       const updated = prev.map(msg =>
         msg.id === id ? { ...msg, status: 'read' as const } : msg
@@ -42,6 +61,7 @@ export default function MessagesPage() {
   };
 
   const markAsResponded = (id: string) => {
+    updateMessageStatus(id, 'responded').catch(() => {});
     setMessages(prev => {
       const updated = prev.map(msg =>
         msg.id === id ? { ...msg, status: 'responded' as const } : msg
@@ -53,6 +73,7 @@ export default function MessagesPage() {
 
   const deleteMessage = (id: string) => {
     if (confirm('Удалить это сообщение?')) {
+      deleteMessageAPI(id).catch(() => {});
       setMessages(prev => {
         const updated = prev.filter(msg => msg.id !== id);
         localStorage.setItem('sofia_messages', JSON.stringify(updated));

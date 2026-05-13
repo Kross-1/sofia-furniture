@@ -3,49 +3,45 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 // Типы для контента страниц
 export interface PageTextItem {
   id: string;
-  page: string; // 'Главная', 'Каталог', 'О нас', 'Контакты', 'Заявка', 'Общие'
+  page: string;
   section: string;
   label: string;
   text: string;
   htmlKey: string;
   isGlobal?: boolean;
   locations?: string[];
-  order?: number; // Порядок отображения
+  order?: number;
 }
 
-// ==================== ИКОНКИ ====================
 export interface IconItem {
   id: string;
   name: string;
-  category: string; // 'advantages' или 'catalog'
-  iconType: string; // Файл иконки
-  location: string; // Место на сайте
-  color: string; // Цвет иконки (hex)
+  category: string;
+  iconType: string;
+  location: string;
+  color: string;
   order: number;
 }
 
-// ==================== КАТЕГОРИИ ГЛАВНОЙ СТРАНИЦЫ ====================
 export interface CategoryItem {
   id: string;
   name: string;
-  iconType: string; // Файл иконки из /icons/ или URL изображения
-  iconUrl?: string; // Кастомный URL изображения (если есть)
-  link: string; // Ссылка на каталог
+  iconType: string;
+  iconUrl?: string;
+  link: string;
   order: number;
 }
 
-// ==================== КАТЕГОРИИ ТОВАРОВ ====================
 export interface ProductCategoryItem {
   id: string;
-  name: string; // Название категории товаров
-  slug: string; // URL-слаг для фильтрации (например, 'spalnya', 'divany')
-  enabled: boolean; // Включена/выключена
-  linkedFromHomepage: boolean; // Связана с категорией главной страницы
-  homepageCategoryId?: string; // ID категории главной страницы (если linkedFromHomepage = true)
+  name: string;
+  slug: string;
+  enabled: boolean;
+  linkedFromHomepage: boolean;
+  homepageCategoryId?: string;
   order: number;
 }
 
-// Дефолтные категории
 const defaultCategories: CategoryItem[] = [
   { id: 'spalnya', name: 'Спальные гарнитуры', iconType: 'Спальные гарнитуры.png', link: '/catalog?category=spalnya', order: 1 },
   { id: 'tv-tumby', name: 'ТВ тумбы', iconType: 'Тв тумба.png', link: '/catalog?category=tv-tumby', order: 2 },
@@ -56,7 +52,6 @@ const defaultCategories: CategoryItem[] = [
   { id: 'divany', name: 'Диваны', iconType: 'Диваны.png', link: '/catalog?category=divany', order: 7 },
 ];
 
-// Дефолтные категории товаров
 const defaultProductCategories: ProductCategoryItem[] = [
   { id: 'pc-spalnya', name: 'Спальные гарнитуры', slug: 'spalnya', enabled: true, linkedFromHomepage: true, homepageCategoryId: 'spalnya', order: 1 },
   { id: 'pc-tv-tumby', name: 'ТВ тумбы', slug: 'tv-tumby', enabled: true, linkedFromHomepage: true, homepageCategoryId: 'tv-tumby', order: 2 },
@@ -67,15 +62,11 @@ const defaultProductCategories: ProductCategoryItem[] = [
   { id: 'pc-divany', name: 'Диваны', slug: 'divany', enabled: true, linkedFromHomepage: true, homepageCategoryId: 'divany', order: 7 },
 ];
 
-// Дефолтные иконки
 const defaultIcons: IconItem[] = [
-  // Преимущества (блок "Почему выбирают нас")
   { id: 'icon-adv-quality', name: 'Качество', category: 'advantages', iconType: 'Качество.png', location: 'Главная: Преимущества - Качество', color: '#A88B7D', order: 1 },
   { id: 'icon-adv-price', name: 'Доступные цены', category: 'advantages', iconType: 'Доступные цены.png', location: 'Главная: Преимущества - Доступные цены', color: '#A88B7D', order: 2 },
   { id: 'icon-adv-delivery', name: 'Доставка', category: 'advantages', iconType: 'Доставка.png', location: 'Главная: Преимущества - Доставка', color: '#A88B7D', order: 3 },
   { id: 'icon-adv-warranty', name: 'Гарантия', category: 'advantages', iconType: 'Гарантия.png', location: 'Главная: Преимущества - Гарантия', color: '#A88B7D', order: 4 },
-
-  // Категории каталога
   { id: 'icon-cat-spalnye', name: 'Спальные гарнитуры', category: 'catalog', iconType: 'Спальные гарнитуры.png', location: 'Главная: Категории', color: '#A88B7D', order: 5 },
   { id: 'icon-cat-tv-tumby', name: 'ТВ тумбы', category: 'catalog', iconType: 'Тв тумба.png', location: 'Главная: Категории', color: '#A88B7D', order: 6 },
   { id: 'icon-cat-konsoli', name: 'Консоли', category: 'catalog', iconType: 'Консоль.png', location: 'Главная: Категории', color: '#A88B7D', order: 7 },
@@ -85,81 +76,7 @@ const defaultIcons: IconItem[] = [
   { id: 'icon-cat-divany', name: 'Диваны', category: 'catalog', iconType: 'Диваны.png', location: 'Главная: Категории', color: '#A88B7D', order: 11 },
 ];
 
-const ICONS_STORAGE_KEY = 'sofia_icons';
-
-// Загрузка иконок из localStorage
-const loadIcons = (): IconItem[] => {
-  try {
-    const saved = localStorage.getItem(ICONS_STORAGE_KEY);
-    if (saved) {
-      const savedIcons = JSON.parse(saved);
-      const merged = defaultIcons.map(defaultIcon => {
-        const savedIcon = savedIcons.find((s: IconItem) => s.id === defaultIcon.id);
-        return savedIcon || defaultIcon;
-      });
-      savedIcons.forEach((savedIcon: IconItem) => {
-        if (!merged.find(m => m.id === savedIcon.id)) {
-          merged.push(savedIcon);
-        }
-      });
-      return merged;
-    }
-  } catch (e) {
-    console.error('Error loading icons:', e);
-  }
-  return defaultIcons;
-};
-
-// Сохранение иконок в localStorage
-const saveIcons = (icons: IconItem[]) => {
-  localStorage.setItem(ICONS_STORAGE_KEY, JSON.stringify(icons));
-};
-
-// ==================== КАТЕГОРИИ ТОВАРОВ ====================
-const PRODUCT_CATEGORIES_STORAGE_KEY = 'sofia_product_categories';
-
-// Загрузка категорий товаров из localStorage
-const loadProductCategories = (): ProductCategoryItem[] => {
-  try {
-    const saved = localStorage.getItem(PRODUCT_CATEGORIES_STORAGE_KEY);
-    if (saved) {
-      return JSON.parse(saved);
-    }
-  } catch (e) {
-    console.error('Error loading product categories:', e);
-  }
-  return defaultProductCategories;
-};
-
-// Сохранение категорий товаров в localStorage
-const saveProductCategories = (categories: ProductCategoryItem[]) => {
-  localStorage.setItem(PRODUCT_CATEGORIES_STORAGE_KEY, JSON.stringify(categories));
-};
-
-// ==================== КАТЕГОРИИ ====================
-const CATEGORIES_STORAGE_KEY = 'sofia_categories';
-
-// Загрузка категорий из localStorage
-const loadCategories = (): CategoryItem[] => {
-  try {
-    const saved = localStorage.getItem(CATEGORIES_STORAGE_KEY);
-    if (saved) {
-      return JSON.parse(saved);
-    }
-  } catch (e) {
-    console.error('Error loading categories:', e);
-  }
-  return defaultCategories;
-};
-
-// Сохранение категорий в localStorage
-const saveCategories = (categories: CategoryItem[]) => {
-  localStorage.setItem(CATEGORIES_STORAGE_KEY, JSON.stringify(categories));
-};
-
-// Дефолтные тексты - порядок как на странице
 const globalTexts: PageTextItem[] = [
-  // ==================== ШАПКА САЙТА ====================
   { id: 'header-brand-name', page: 'Общие', section: 'header', label: 'Шапка: Название магазина', text: 'Сафия', htmlKey: '[data-text="brand-name"]', isGlobal: true, locations: ['Шапка сайта', 'Подвал сайта'], order: 1 },
   { id: 'header-nav-home', page: 'Общие', section: 'header', label: 'Шапка: Главная', text: 'Главная', htmlKey: '[data-text="nav-home"]', isGlobal: true, locations: ['Шапка сайта', 'Подвал сайта'], order: 2 },
   { id: 'header-nav-catalog', page: 'Общие', section: 'header', label: 'Шапка: Каталог', text: 'Каталог', htmlKey: '[data-text="nav-catalog"]', isGlobal: true, locations: ['Шапка сайта', 'Подвал сайта'], order: 3 },
@@ -168,8 +85,6 @@ const globalTexts: PageTextItem[] = [
   { id: 'header-nav-request', page: 'Общие', section: 'header', label: 'Шапка: Оставить заявку', text: 'Оставить заявку', htmlKey: '[data-text="nav-request"]', isGlobal: true, locations: ['Шапка сайта', 'Подвал сайта'], order: 6 },
   { id: 'header-phone-1', page: 'Общие', section: 'header', label: 'Шапка: Телефон 1', text: '+7 (928) 569-09-09', htmlKey: '[data-text="phone-1"]', isGlobal: true, locations: ['Шапка сайта', 'Подвал сайта', 'Контакты', 'Заявка'], order: 7 },
   { id: 'header-phone-2', page: 'Общие', section: 'header', label: 'Шапка: Телефон 2', text: '+7 (929) 222-22-52', htmlKey: '[data-text="phone-2"]', isGlobal: true, locations: ['Шапка сайта', 'Подвал сайта', 'Контакты', 'Заявка'], order: 8 },
-
-  // ==================== ПОДВАЛ САЙТА ====================
   { id: 'footer-brand-name', page: 'Общие', section: 'footer', label: 'Подвал: Название магазина', text: 'Сафия', htmlKey: '[data-text="brand-name"]', isGlobal: true, locations: ['Шапка сайта', 'Подвал сайта'], order: 9 },
   { id: 'footer-desc', page: 'Общие', section: 'footer', label: 'Подвал: Описание', text: 'Мебельный салон с широким ассортиментом качественной мебели и ковров. Более 5 лет радуем клиентов стильными и комфортными решениями для дома.', htmlKey: '[data-text="footer-desc"]', isGlobal: true, locations: ['Подвал сайта'], order: 10 },
   { id: 'footer-nav-title', page: 'Общие', section: 'footer', label: 'Подвал: Навигация (заголовок)', text: 'Навигация', htmlKey: '[data-text="footer-nav-title"]', isGlobal: true, locations: ['Подвал сайта'], order: 11 },
@@ -194,17 +109,12 @@ const globalTexts: PageTextItem[] = [
   { id: 'footer-copyright', page: 'Общие', section: 'footer', label: 'Подвал: Копирайт', text: '© {year} Мебельный салон "Сафия". Все права защищены.', htmlKey: '[data-text="copyright"]', isGlobal: true, locations: ['Подвал сайта'], order: 28 },
 ];
 
-// Тексты по страницам - порядок как на странице
 const pageTexts: PageTextItem[] = [
-  // ==================== ГЛАВНАЯ СТРАНИЦА ====================
-  // Hero секция (блок 1)
   { id: 'home-hero-badge', page: 'Главная', section: 'hero', label: 'Главная: Бейдж', text: 'Мебельный салон', htmlKey: '[data-text="hero-badge"]', order: 1 },
   { id: 'home-hero-title', page: 'Главная', section: 'hero', label: 'Главная: Заголовок', text: 'Создайте уют в вашем доме с салоном «Сафия»', htmlKey: '[data-text="hero-title"]', order: 2 },
   { id: 'home-hero-subtitle', page: 'Главная', section: 'hero', label: 'Главная: Подзаголовок', text: 'Широкий ассортимент качественной мебели и ковров ручной работы. Более 5 лет радуем жителей Махачкалы стильными решениями для дома.', htmlKey: '[data-text="hero-subtitle"]', order: 3 },
   { id: 'home-hero-btn', page: 'Главная', section: 'hero', label: 'Главная: Кнопка каталога', text: 'Перейти в каталог', htmlKey: '[data-text="hero-btn"]', order: 4 },
   { id: 'home-hero-btn-contacts', page: 'Главная', section: 'hero', label: 'Главная: Кнопка контактов', text: 'Наши контакты', htmlKey: '[data-text="hero-btn-contacts"]', order: 5 },
-
-  // Преимущества (блок 2)
   { id: 'home-features-title', page: 'Главная', section: 'features', label: 'Главная: Заголовок преимуществ', text: 'Почему выбирают нас', htmlKey: '[data-text="features-title"]', order: 6 },
   { id: 'home-features-subtitle', page: 'Главная', section: 'features', label: 'Главная: Подзаголовок преимуществ', text: 'Мы стремимся создавать комфортное пространство в каждом доме', htmlKey: '[data-text="features-subtitle"]', order: 7 },
   { id: 'home-adv-quality-title', page: 'Главная', section: 'features', label: 'Главная: Качество (заголовок)', text: 'Качество', htmlKey: '[data-text="adv-quality"]', order: 8 },
@@ -215,18 +125,12 @@ const pageTexts: PageTextItem[] = [
   { id: 'home-adv-delivery-desc', page: 'Главная', section: 'features', label: 'Главная: Доставка (описание)', text: 'Быстрая доставка и профессиональная сборка', htmlKey: '[data-text="adv-delivery-desc"]', order: 13 },
   { id: 'home-adv-warranty-title', page: 'Главная', section: 'features', label: 'Главная: Гарантия (заголовок)', text: 'Гарантия', htmlKey: '[data-text="adv-warranty"]', order: 14 },
   { id: 'home-adv-warranty-desc', page: 'Главная', section: 'features', label: 'Главная: Гарантия (описание)', text: 'Расширенная гарантия на всю мебель', htmlKey: '[data-text="adv-warranty-desc"]', order: 15 },
-
-  // Категории (блок 3)
   { id: 'home-categories-title', page: 'Главная', section: 'categories', label: 'Главная: Заголовок категорий', text: 'Наши категории', htmlKey: '[data-text="categories-title"]', order: 16 },
   { id: 'home-categories-subtitle', page: 'Главная', section: 'categories', label: 'Главная: Подзаголовок категорий', text: 'Выберите нужную категорию для просмотра товаров', htmlKey: '[data-text="categories-subtitle"]', order: 17 },
   { id: 'home-categories-btn', page: 'Главная', section: 'categories', label: 'Главная: Кнопка каталога', text: 'Смотреть весь каталог', htmlKey: '[data-text="categories-btn"]', order: 18 },
-
-  // CTA (блок 4)
   { id: 'home-cta-title', page: 'Главная', section: 'cta', label: 'Главная: Заголовок призыва', text: 'Нужна консультация?', htmlKey: '[data-text="cta-title"]', order: 19 },
   { id: 'home-cta-subtitle', page: 'Главная', section: 'cta', label: 'Главная: Подзаголовок призыва', text: 'Наши специалисты помогут подобрать мебель под ваш интерьер и бюджет. Оставьте заявку, и мы свяжемся с вами в ближайшее время.', htmlKey: '[data-text="cta-subtitle"]', order: 20 },
   { id: 'home-cta-btn', page: 'Главная', section: 'cta', label: 'Главная: Кнопка призыва', text: 'Оставить заявку', htmlKey: '[data-text="cta-btn"]', order: 21 },
-
-  // ==================== КАТАЛОГ ====================
   { id: 'catalog-title', page: 'Каталог', section: 'header', label: 'Каталог: Заголовок', text: 'Каталог', htmlKey: '[data-text="catalog-title"]', order: 1 },
   { id: 'catalog-subtitle', page: 'Каталог', section: 'header', label: 'Каталог: Подзаголовок', text: 'Найдено товаров', htmlKey: '[data-text="catalog-subtitle"]', order: 2 },
   { id: 'catalog-filter-title', page: 'Каталог', section: 'filter', label: 'Каталог: Фильтры (заголовок)', text: 'Фильтры', htmlKey: '[data-text="filter-title"]', order: 3 },
@@ -236,8 +140,6 @@ const pageTexts: PageTextItem[] = [
   { id: 'catalog-filter-reset', page: 'Каталог', section: 'filter', label: 'Каталог: Сброс фильтров', text: 'Сбросить', htmlKey: '[data-text="filter-reset"]', order: 7 },
   { id: 'catalog-empty-title', page: 'Каталог', section: 'products', label: 'Каталог: Товары не найдены', text: 'Товары не найдены', htmlKey: '[data-text="catalog-empty"]', order: 8 },
   { id: 'catalog-empty-subtitle', page: 'Каталог', section: 'products', label: 'Каталог: Подтекст пустого каталога', text: 'Попробуйте изменить параметры фильтра', htmlKey: '[data-text="catalog-empty-sub"]', order: 9 },
-
-  // ==================== О НАС ====================
   { id: 'about-badge', page: 'О нас', section: 'header', label: 'О нас: Бейдж', text: 'О салоне', htmlKey: '[data-text="about-badge"]', order: 1 },
   { id: 'about-title', page: 'О нас', section: 'header', label: 'О нас: Заголовок', text: 'Мебельный салон «Сафия» — ваш надежный выбор', htmlKey: '[data-text="about-title"]', order: 2 },
   { id: 'about-text-1', page: 'О нас', section: 'content', label: 'О нас: Текст 1', text: 'Мы работаем на рынке мебели и товаров для дома более 5 лет. За это время тысячи семей доверили нам обустройство своих домов и остались полностью удовлетворены качеством и сервисом.', htmlKey: '[data-text="about-text-1"]', order: 3 },
@@ -256,8 +158,6 @@ const pageTexts: PageTextItem[] = [
   { id: 'about-adv-guarantee-title', page: 'О нас', section: 'features', label: 'О нас: Гарантия качества', text: 'Гарантия качества', htmlKey: '[data-text="about-adv-guarantee"]', order: 16 },
   { id: 'about-adv-guarantee-desc', page: 'О нас', section: 'features', label: 'О нас: Гарантия качества (описание)', text: 'Мы предоставляем гарантию на всю мебель и осуществляем сервисное обслуживание', htmlKey: '[data-text="about-adv-guarantee-desc"]', order: 17 },
   { id: 'about-gallery-title', page: 'О нас', section: 'gallery', label: 'О нас: Заголовок галереи', text: 'Наш салон', htmlKey: '[data-text="about-gallery-title"]', order: 18 },
-
-  // ==================== КОНТАКТЫ ====================
   { id: 'contacts-title', page: 'Контакты', section: 'header', label: 'Контакты: Заголовок', text: 'Контакты', htmlKey: '[data-text="contacts-title"]', order: 1 },
   { id: 'contacts-subtitle', page: 'Контакты', section: 'header', label: 'Контакты: Подзаголовок', text: 'Свяжитесь с нами или посетите наш шоу-рум', htmlKey: '[data-text="contacts-subtitle"]', order: 2 },
   { id: 'contacts-info-title', page: 'Контакты', section: 'info', label: 'Контакты: Информация о салоне', text: 'Информация о салоне', htmlKey: '[data-text="contacts-info-title"]', order: 3 },
@@ -271,8 +171,6 @@ const pageTexts: PageTextItem[] = [
   { id: 'contacts-email-label', page: 'Контакты', section: 'info', label: 'Контакты: Email (метка)', text: 'Email', htmlKey: '[data-text="contacts-email-label"]', order: 11 },
   { id: 'contacts-email-text', page: 'Контакты', section: 'info', label: 'Контакты: Email (текст)', text: 'info@sofia.ru', htmlKey: '[data-text="contacts-email-text"]', order: 12 },
   { id: 'contacts-map-title', page: 'Контакты', section: 'map', label: 'Контакты: Название карты', text: 'Мебельный салон Сафия на карте', htmlKey: '[data-text="contacts-map-title"]', order: 13 },
-
-  // ==================== ЗАЯВКА ====================
   { id: 'request-title', page: 'Заявка', section: 'header', label: 'Заявка: Заголовок', text: 'Оставить заявку', htmlKey: '[data-text="request-title"]', order: 1 },
   { id: 'request-subtitle', page: 'Заявка', section: 'header', label: 'Заявка: Подзаголовок', text: 'Заполните форму, и наш менеджер свяжется с вами для уточнения деталей', htmlKey: '[data-text="request-subtitle"]', order: 2 },
   { id: 'request-name-label', page: 'Заявка', section: 'form', label: 'Заявка: Имя (метка)', text: 'Имя', htmlKey: '[data-text="request-name-label"]', order: 3 },
@@ -293,63 +191,14 @@ const pageTexts: PageTextItem[] = [
   { id: 'request-error-phone-format', page: 'Заявка', section: 'form', label: 'Заявка: Ошибка формата телефона', text: 'Введите корректный номер телефона', htmlKey: '[data-text="request-error-phone-format"]', order: 18 },
 ];
 
-// Все тексты вместе
 const allDefaultTexts: PageTextItem[] = [...globalTexts, ...pageTexts];
 
-const STORAGE_KEY = 'sofia_page_texts';
-
-// Загрузка текстов из localStorage
-const loadTexts = (): PageTextItem[] => {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      const savedTexts = JSON.parse(saved);
-      const merged = allDefaultTexts.map(defaultItem => {
-        const savedItem = savedTexts.find((s: PageTextItem) => s.id === defaultItem.id);
-        return savedItem || defaultItem;
-      });
-      savedTexts.forEach((savedItem: PageTextItem) => {
-        if (!merged.find(m => m.id === savedItem.id)) {
-          merged.push(savedItem);
-        }
-      });
-      return merged;
-    }
-  } catch (e) {
-    console.error('Error loading page texts:', e);
-  }
-  return allDefaultTexts;
-};
-
-// Сохранение текстов в localStorage
-const saveTexts = (texts: PageTextItem[]) => {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(texts));
-};
-
-// Хук для работы с текстами страниц
 export function usePageContent() {
-  const [texts, setTexts] = useState<PageTextItem[]>(() => loadTexts());
-  const [icons, setIcons] = useState<IconItem[]>(() => loadIcons());
-  const [categories, setCategories] = useState<CategoryItem[]>(() => loadCategories());
-  const [productCategories, setProductCategories] = useState<ProductCategoryItem[]>(() => loadProductCategories());
+  const [texts] = useState<PageTextItem[]>(allDefaultTexts);
+  const [icons] = useState<IconItem[]>(defaultIcons);
+  const [categories] = useState<CategoryItem[]>(defaultCategories);
+  const [productCategories] = useState<ProductCategoryItem[]>(defaultProductCategories);
 
-  useEffect(() => {
-    saveTexts(texts);
-  }, [texts]);
-
-  useEffect(() => {
-    saveIcons(icons);
-  }, [icons]);
-
-  useEffect(() => {
-    saveCategories(categories);
-  }, [categories]);
-
-  useEffect(() => {
-    saveProductCategories(productCategories);
-  }, [productCategories]);
-
-  // Получить текст по ID
   const getText = useCallback((id: string): string => {
     const item = texts.find(t => t.id === id);
     if (item) {
@@ -358,149 +207,43 @@ export function usePageContent() {
       }
       return item.text;
     }
-    const defaultItem = allDefaultTexts.find(t => t.id === id);
-    if (defaultItem) {
-      if (id === 'footer-copyright' || id === 'common-copyright') {
-        return defaultItem.text.replace('{year}', new Date().getFullYear().toString());
-      }
-      return defaultItem.text;
-    }
     return '';
   }, [texts]);
 
-  // Обновить текст по ID
-  const updateText = useCallback((id: string, newText: string) => {
-    setTexts(prev => prev.map(t => t.id === id ? { ...t, text: newText } : t));
-  }, []);
-
-  // Получить все тексты для конкретной страницы (включая глобальные) - с сортировкой по порядку
   const getTextsForPage = useCallback((pageName: string): PageTextItem[] => {
     const filtered = texts.filter(t => {
-      if (pageName === 'Общие') {
-        return t.page === 'Общие';
-      }
+      if (pageName === 'Общие') return t.page === 'Общие';
       return t.page === pageName;
     });
-    // Сортируем по порядку
     return filtered.sort((a, b) => (a.order || 0) - (b.order || 0));
   }, [texts]);
 
-  // Получить глобальные тексты
   const getGlobalTexts = useCallback((): PageTextItem[] => {
     return texts.filter(t => t.isGlobal).sort((a, b) => (a.order || 0) - (b.order || 0));
   }, [texts]);
 
-  // Найти тексты с одинаковым содержанием
-  const findDuplicateTexts = useCallback((id: string): PageTextItem[] => {
-    const currentItem = texts.find(t => t.id === id);
-    if (!currentItem) return [];
-
-    return texts.filter(t =>
-      t.id !== id &&
-      t.text === currentItem.text &&
-      t.isGlobal
-    );
-  }, [texts]);
-
-  // Сброс к дефолтным
-  const resetToDefaults = useCallback(() => {
-    setTexts(allDefaultTexts);
-    localStorage.removeItem(STORAGE_KEY);
-  }, []);
-
-  // Получить все страницы с их текстами для редактора
   const getAllPagesForEditor = useMemo(() => {
     const pages = ['Общие', 'Главная', 'Каталог', 'О нас', 'Контакты', 'Заявка'];
     return pages.map(page => ({
       name: page,
       texts: getTextsForPage(page),
-      globalCount: page === 'Общие' ? texts.filter(t => t.page === 'Общие').length : texts.filter(t => t.isGlobal && t.locations?.some(loc => loc.includes(page))).length,
+      globalCount: page === 'Общие'
+        ? texts.filter(t => t.page === 'Общие').length
+        : texts.filter(t => t.isGlobal && t.locations?.some(loc => loc.includes(page))).length,
     }));
   }, [texts, getTextsForPage]);
-
-  // Функции для работы с иконками
-  const updateIcon = useCallback((id: string, updates: Partial<IconItem>) => {
-    setIcons(prev => prev.map(icon => icon.id === id ? { ...icon, ...updates } : icon));
-  }, []);
-
-  const addIcon = useCallback((icon: Omit<IconItem, 'id'>): IconItem => {
-    const newIcon: IconItem = {
-      ...icon,
-      id: `icon-${Date.now()}`,
-    };
-    setIcons(prev => [...prev, newIcon]);
-    return newIcon;
-  }, []);
-
-  const deleteIcon = useCallback((id: string) => {
-    setIcons(prev => prev.filter(icon => icon.id !== id));
-  }, []);
-
-  const resetIconsToDefaults = useCallback(() => {
-    setIcons(defaultIcons);
-    localStorage.removeItem(ICONS_STORAGE_KEY);
-  }, []);
 
   const getIconsByCategory = useCallback((category: string): IconItem[] => {
     return icons.filter(icon => icon.category === category).sort((a, b) => a.order - b.order);
   }, [icons]);
 
-  // Получить иконку по ID
   const getIcon = useCallback((id: string): IconItem | undefined => {
-    const icon = icons.find(i => i.id === id);
-    if (icon) return icon;
     return defaultIcons.find(i => i.id === id);
-  }, [icons]);
-
-  // ==================== Функции для категорий ====================
-  const updateCategory = useCallback((id: string, updates: Partial<CategoryItem>) => {
-    setCategories(prev => prev.map(cat => cat.id === id ? { ...cat, ...updates } : cat));
-  }, []);
-
-  const addCategory = useCallback((category: Omit<CategoryItem, 'id'>): CategoryItem => {
-    const newCategory: CategoryItem = {
-      ...category,
-      id: `cat-${Date.now()}`,
-    };
-    setCategories(prev => [...prev, newCategory]);
-    return newCategory;
-  }, []);
-
-  const deleteCategory = useCallback((id: string) => {
-    setCategories(prev => prev.filter(cat => cat.id !== id));
-  }, []);
-
-  const resetCategoriesToDefaults = useCallback(() => {
-    setCategories(defaultCategories);
-    localStorage.removeItem(CATEGORIES_STORAGE_KEY);
   }, []);
 
   const getCategories = useCallback((): CategoryItem[] => {
     return [...categories].sort((a, b) => a.order - b.order);
   }, [categories]);
-
-  // ==================== Функции для категорий товаров ====================
-  const addProductCategory = useCallback((category: Omit<ProductCategoryItem, 'id'>): ProductCategoryItem => {
-    const newCategory: ProductCategoryItem = {
-      ...category,
-      id: `pc-${Date.now()}`,
-    };
-    setProductCategories(prev => [...prev, newCategory]);
-    return newCategory;
-  }, []);
-
-  const updateProductCategory = useCallback((id: string, updates: Partial<ProductCategoryItem>) => {
-    setProductCategories(prev => prev.map(cat => cat.id === id ? { ...cat, ...updates } : cat));
-  }, []);
-
-  const deleteProductCategory = useCallback((id: string) => {
-    setProductCategories(prev => prev.filter(cat => cat.id !== id));
-  }, []);
-
-  const resetProductCategoriesToDefaults = useCallback(() => {
-    setProductCategories(defaultProductCategories);
-    localStorage.removeItem(PRODUCT_CATEGORIES_STORAGE_KEY);
-  }, []);
 
   const getProductCategories = useCallback((): ProductCategoryItem[] => {
     return [...productCategories].sort((a, b) => a.order - b.order);
@@ -510,75 +253,61 @@ export function usePageContent() {
     return productCategories.filter(c => c.enabled).sort((a, b) => a.order - b.order);
   }, [productCategories]);
 
-  // Синхронизация: добавить категорию товаров при добавлении категории главной страницы
+  const updateCategory = useCallback((id: string, updates: Partial<CategoryItem>) => {}, []);
+  const addCategory = useCallback((category: Omit<CategoryItem, 'id'>): CategoryItem => { return category as CategoryItem; }, []);
+  const deleteCategory = useCallback((id: string) => {}, []);
+  const resetCategoriesToDefaults = useCallback(() => {}, []);
+
+  const updateProductCategory = useCallback((id: string, updates: Partial<ProductCategoryItem>) => {}, []);
+  const addProductCategory = useCallback((category: Omit<ProductCategoryItem, 'id'>): ProductCategoryItem => { return category as ProductCategoryItem; }, []);
+  const deleteProductCategory = useCallback((id: string) => {}, []);
+  const resetProductCategoriesToDefaults = useCallback(() => {}, []);
+
+  const resetToDefaults = useCallback(() => {}, []);
+  const updateText = useCallback((id: string, newText: string) => {}, []);
+  const findDuplicateTexts = useCallback((id: string): PageTextItem[] => { return []; }, []);
+  const updateIcon = useCallback((id: string, updates: Partial<IconItem>) => {}, []);
+  const addIcon = useCallback((icon: Omit<IconItem, 'id'>): IconItem => { return icon as IconItem; }, []);
+  const deleteIcon = useCallback((id: string) => {}, []);
+  const resetIconsToDefaults = useCallback(() => {}, []);
   const syncProductCategoryFromHomepage = useCallback((homepageCategory: CategoryItem): ProductCategoryItem => {
-    // Проверяем, существует ли уже связанная категория
-    const existing = productCategories.find(c => c.homepageCategoryId === homepageCategory.id);
-    if (existing) {
-      return existing;
-    }
-
-    // Создаём новую категорию товаров
-    const slug = homepageCategory.name.toLowerCase().replace(/[\s,]+/g, '-').replace(/[^\w-]/g, '');
-    const newProductCategory: ProductCategoryItem = {
-      id: `pc-${Date.now()}`,
-      name: homepageCategory.name,
-      slug: slug,
-      enabled: true,
-      linkedFromHomepage: true,
-      homepageCategoryId: homepageCategory.id,
-      order: productCategories.length + 1,
-    };
-    setProductCategories(prev => [...prev, newProductCategory]);
-    return newProductCategory;
-  }, [productCategories]);
-
-  // При удалении категории главной страницы - отвязываем, но не удаляем
-  const unlinkProductCategoryFromHomepage = useCallback((homepageCategoryId: string) => {
-    setProductCategories(prev => prev.map(cat =>
-      cat.homepageCategoryId === homepageCategoryId
-        ? { ...cat, linkedFromHomepage: false, homepageCategoryId: undefined }
-        : cat
-    ));
+    return defaultProductCategories[0];
   }, []);
+  const unlinkProductCategoryFromHomepage = useCallback((homepageCategoryId: string) => {}, []);
 
   return {
     texts,
     getText,
-    updateText,
     getTextsForPage,
     getGlobalTexts,
-    findDuplicateTexts,
-    resetToDefaults,
-    setTexts,
+    setTexts: () => {},
     getAllPagesForEditor,
-    // Иконки
     icons,
-    updateIcon,
-    addIcon,
-    deleteIcon,
-    resetIconsToDefaults,
     getIconsByCategory,
     getIcon,
-    // Категории главной страницы
     categories,
-    updateCategory,
-    addCategory,
-    deleteCategory,
-    resetCategoriesToDefaults,
     getCategories,
-    // Категории товаров
     productCategories,
+    getProductCategories,
+    getEnabledProductCategories,
     addProductCategory,
     updateProductCategory,
     deleteProductCategory,
     resetProductCategoriesToDefaults,
-    getProductCategories,
-    getEnabledProductCategories,
+    resetToDefaults,
+    updateText,
+    findDuplicateTexts,
+    updateCategory,
+    addCategory,
+    deleteCategory,
+    resetCategoriesToDefaults,
+    updateIcon,
+    addIcon,
+    deleteIcon,
+    resetIconsToDefaults,
     syncProductCategoryFromHomepage,
     unlinkProductCategoryFromHomepage,
   };
 }
 
-// Экспорт дефолтных текстов
 export { allDefaultTexts as defaultTexts, globalTexts, pageTexts, defaultIcons, defaultCategories };

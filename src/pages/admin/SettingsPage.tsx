@@ -1,7 +1,8 @@
-﻿import { useState } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSiteData } from '../../contexts/SiteDataContext';
 import { Save, AlertCircle, CheckCircle, Lock, Eye, EyeOff } from 'lucide-react';
+import { getSiteSettings, saveSiteSetting } from '../../lib/db';
 
 export default function SettingsPage() {
   const { user, isDeveloper, updateUser } = useAuth();
@@ -25,8 +26,27 @@ export default function SettingsPage() {
   const [passwordError, setPasswordError] = useState('');
   const [passwordSuccess, setPasswordSuccess] = useState(false);
 
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const settings = await getSiteSettings();
+        const emailSetting = settings.find((s: any) => s.key === 'contact_email');
+        if (emailSetting) {
+          setContactEmail(emailSetting.value);
+        }
+      } catch {
+        const saved = localStorage.getItem('sofia_contact_email');
+        if (saved) setContactEmail(saved);
+      }
+    };
+    load();
+  }, []);
+
   const handleSave = async () => {
     setIsSaving(true);
+    try {
+      await saveSiteSetting('contact_email', contactEmail);
+    } catch {}
     localStorage.setItem('sofia_contact_email', contactEmail);
     await new Promise((resolve) => setTimeout(resolve, 1000));
     setIsSaving(false);

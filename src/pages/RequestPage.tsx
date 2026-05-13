@@ -1,8 +1,9 @@
 import { useState, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Send, CheckCircle, AlertCircle, Phone, X, ShoppingBag } from 'lucide-react';
+import { Send, CheckCircle, AlertCircle, Phone, ShoppingBag } from 'lucide-react';
 import { usePageContent } from '../hooks/usePageContent';
 import { useSiteData } from '../contexts/SiteDataContext';
+import { saveMessage } from '../lib/db';
 
 interface FormData {
   name: string;
@@ -46,7 +47,7 @@ export default function RequestPage() {
   const productId = searchParams.get('product');
   const selectedProduct = useMemo(() => {
     if (!productId) return null;
-    return products.find(p => p.id === Number(productId)) || null;
+    return products.find(p => String(p.id) === productId) || null;
   }, [productId, products]);
 
   const formatPrice = (price: number) => {
@@ -82,6 +83,9 @@ export default function RequestPage() {
       messages.pop();
     }
     localStorage.setItem(MESSAGES_STORAGE_KEY, JSON.stringify(messages));
+
+    const productInfo = product ? `${product.name} (${product.price} ₽)` : undefined;
+    saveMessage(data.name, data.phone, data.comment || undefined, productInfo).catch(() => {});
 
     const notificationEmail = localStorage.getItem('sofia_contact_email') || 'info@sofia.ru';
     console.log(`Email notification would be sent to: ${notificationEmail}`);
@@ -202,11 +206,11 @@ export default function RequestPage() {
           </p>
         </div>
 
-        <div className={`${selectedProduct ? 'grid grid-cols-1 lg:grid-cols-5 gap-8' : 'max-w-2xl mx-auto'}`}>
+        <div className={`${selectedProduct ? 'grid grid-cols-1 lg:grid-cols-5 gap-8 items-stretch' : 'max-w-2xl mx-auto'}`}>
           {/* Form */}
-          <div className={`${selectedProduct ? 'lg:col-span-3' : ''}`}>
-            <div className="bg-card text-card-foreground rounded-2xl border border-border shadow-sm p-8">
-              <form onSubmit={handleSubmit} className="space-y-6">
+          <div className={`${selectedProduct ? 'lg:col-span-2' : ''} flex flex-col`}>
+            <div className="bg-card text-card-foreground rounded-2xl border border-border shadow-sm p-8 flex flex-col flex-1">
+              <form onSubmit={handleSubmit} className="space-y-6 flex flex-col flex-1">
                 {/* Name */}
                 <div>
                   <label
@@ -286,7 +290,7 @@ export default function RequestPage() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full btn-accent flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full btn-accent flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed mt-auto"
                   data-text="request-btn"
                 >
                   {isSubmitting ? (
@@ -334,20 +338,20 @@ export default function RequestPage() {
 
           {/* Product Card */}
           {selectedProduct && (
-            <div className="lg:col-span-2">
-              <div className="bg-card text-card-foreground rounded-2xl border border-border shadow-sm overflow-hidden sticky top-24">
-                <div className="p-4 border-b border-border flex items-center gap-2">
+            <div className="lg:col-span-3 flex flex-col">
+              <div className="bg-card text-card-foreground rounded-2xl border border-border shadow-sm overflow-hidden flex flex-col flex-1">
+                <div className="p-4 border-b border-border flex items-center gap-2 flex-shrink-0">
                   <ShoppingBag className="w-5 h-5 text-accent" />
                   <h3 className="font-semibold text-foreground">Выбранный товар</h3>
                 </div>
-                <div className="relative aspect-[4/3] overflow-hidden bg-muted">
+                <div className="relative overflow-hidden bg-muted flex-shrink-0" style={{ height: '180px' }}>
                   <img
                     src={selectedProduct.image}
                     alt={selectedProduct.name}
                     className="w-full h-full object-cover"
                   />
                 </div>
-                <div className="p-5">
+                <div className="p-5 flex flex-col flex-1">
                   <p className="text-xs text-muted-foreground mb-1 uppercase tracking-wide">{selectedProduct.category}</p>
                   <h4 className="font-serif text-lg font-semibold text-foreground mb-2 line-clamp-2">
                     {selectedProduct.name}
@@ -357,7 +361,7 @@ export default function RequestPage() {
                       Материал: {selectedProduct.material}
                     </p>
                   )}
-                  <div className="text-2xl font-bold text-accent">
+                  <div className="text-2xl font-bold text-accent mt-auto">
                     {formatPrice(selectedProduct.price)}
                   </div>
                 </div>
