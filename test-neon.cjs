@@ -1,3 +1,0 @@
-const {neon} = require('./node_modules/.pnpm/@neondatabase+serverless@1.1.0/node_modules/@neondatabase/serverless/index.js');
-const db = neon('postgres://bbcf8954088957e4fbb0bc328f877a1ee6bb990801161a42912c228557579937:sk_1D334oCMZ_6crYbIsn9Gx@db.prisma.io:5432/postgres?sslmode=require');
-db`SELECT * FROM "Category" ORDER BY "sortOrder"`.then(r => { console.log(JSON.stringify(r)); process.exit(0); }).catch(e => { console.error('ERROR:', e.message); process.exit(1); });
