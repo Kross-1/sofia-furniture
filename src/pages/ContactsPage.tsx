@@ -162,7 +162,7 @@ export default function ContactsPage() {
           <div className="flex flex-col">
             <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden flex-1 min-h-[400px] lg:min-h-0">
               <iframe
-                src="https://yandex.ru/map-widget/v1/?um=constructor%3Ab0f6bdba1bf40e61eb94b3385213c766d1d00889f4b9b4a464485f23875b0b5b&amp;source=constructor"
+                src="https://yandex.ru/map-widget/v1/?z=12&ol=biz&oid=230037220228"
                 width="100%"
                 height="100%"
                 frameBorder="0"
