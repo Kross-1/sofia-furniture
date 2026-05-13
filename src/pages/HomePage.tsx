@@ -69,6 +69,8 @@ export default function HomePage() {
     return item?.value || '';
   };
 
+  const heroBg = getMedia('hero_background');
+  const heroVideo = getMedia('hero_video');
   const heroSrc = heroBg;
 
   const getCategoryIconSrc = (category: { iconType: string; iconUrl?: string }) => {
