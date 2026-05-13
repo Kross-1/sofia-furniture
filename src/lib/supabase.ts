@@ -42,9 +42,6 @@ async function fetchWithRetry(url: string, options: any, retries = 3) {
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   global: {
     fetch: (url, options) => fetchWithRetry(url, options || {})
-  },
-  realtime: {
-    enabled: false
   }
 });
 
