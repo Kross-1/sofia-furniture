@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Send, CheckCircle, AlertCircle, Phone, X, ShoppingBag } from 'lucide-react';
+import { Send, CheckCircle, AlertCircle, Phone, ShoppingBag } from 'lucide-react';
 import { usePageContent } from '../hooks/usePageContent';
 import { useSiteData } from '../contexts/SiteDataContext';
 import { saveMessage } from '../lib/db';
@@ -208,9 +208,9 @@ export default function RequestPage() {
 
         <div className={`${selectedProduct ? 'grid grid-cols-1 lg:grid-cols-5 gap-8' : 'max-w-2xl mx-auto'}`}>
           {/* Form */}
-          <div className={`${selectedProduct ? 'lg:col-span-3' : ''} flex`}>
-            <div className="bg-card text-card-foreground rounded-2xl border border-border shadow-sm p-8 w-full flex flex-col">
-              <form onSubmit={handleSubmit} className="space-y-6">
+          <div className={`${selectedProduct ? 'lg:col-span-3' : ''} flex flex-col`}>
+            <div className="bg-card text-card-foreground rounded-2xl border border-border shadow-sm p-8 w-full flex flex-col flex-1">
+              <form onSubmit={handleSubmit} className="space-y-6 flex flex-col flex-1">
                 {/* Name */}
                 <div>
                   <label
@@ -290,7 +290,7 @@ export default function RequestPage() {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full btn-accent flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full btn-accent flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed mt-auto"
                   data-text="request-btn"
                 >
                   {isSubmitting ? (
@@ -338,8 +338,8 @@ export default function RequestPage() {
 
           {/* Product Card */}
           {selectedProduct && (
-            <div className="lg:col-span-2 flex">
-              <div className="bg-card text-card-foreground rounded-2xl border border-border shadow-sm overflow-hidden flex flex-col w-full h-full">
+            <div className="lg:col-span-2 flex flex-col">
+              <div className="bg-card text-card-foreground rounded-2xl border border-border shadow-sm overflow-hidden flex flex-col flex-1">
                 <div className="p-4 border-b border-border flex items-center gap-2 flex-shrink-0">
                   <ShoppingBag className="w-5 h-5 text-accent" />
                   <h3 className="font-semibold text-foreground">Выбранный товар</h3>
