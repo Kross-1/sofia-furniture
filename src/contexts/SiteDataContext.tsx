@@ -1,20 +1,10 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Product } from '../data/products';
 import { usePageContent } from '../hooks/usePageContent';
-import { Category } from '../data/products';
-import { fetchSiteContent, saveSiteContent, fetchProducts, saveProduct, updateProduct as updateProductDB, deleteProduct as deleteProductDB } from '../lib/supabase';
+import { getProducts, addProduct, updateProductDB, deleteProductDB } from '../lib/db';
 
 const defaultMaterials = [
-  'Дерево',
-  'МДФ',
-  'ДСП',
-  'Металл',
-  'Ткань',
-  'Кожа',
-  'Шерсть',
-  'Вискоза',
-  'Велюр',
-  'Замша',
+  'Дерево', 'МДФ', 'ДСП', 'Металл', 'Ткань', 'Кожа', 'Шерсть', 'Вискоза', 'Велюр', 'Замша',
 ];
 
 interface SiteData {
@@ -51,79 +41,45 @@ export function SiteDataProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [isInitialized, setIsInitialized] = useState(false);
 
-  const categories: Category[] = getEnabledProductCategories().map((pc, index) => ({
-    id: pc.slug,
-    name: pc.name,
-    icon: 'Grid3X3',
-    sort_order: pc.order || index + 1,
-  }));
-
   useEffect(() => {
     async function loadData() {
       try {
         setIsLoading(true);
-        console.log('Loading from Supabase...');
+        console.log('Loading from Vercel Postgres...');
         
-        const [contentData, productsData] = await Promise.all([
-          fetchSiteContent().catch((e) => { console.error('fetchSiteContent error:', e); return []; }),
-          fetchProducts().catch((e) => { console.error('fetchProducts error:', e); return []; })
-        ]);
-        
+        const productsData = await getProducts();
         console.log('Products from DB:', productsData);
 
-        const content: Record<string, Record<string, string>> = {};
-        for (const item of contentData) {
-          if (!content[item.page]) content[item.page] = {};
-          content[item.page][item.key] = item.value;
-        }
-
-        const stored = localStorage.getItem('sofia_furniture_data');
+        const stored = localStorage.getItem(STORAGE_KEY);
         let savedProducts = [];
-        let savedContent = {};
         
         if (stored) {
           try {
             const parsed = JSON.parse(stored);
             savedProducts = parsed.products || [];
-            savedContent = parsed.content || {};
           } catch {}
         }
 
         const finalProducts = productsData.length > 0 ? productsData : savedProducts;
-        const finalContent = Object.keys(content).length > 0 ? content : savedContent;
 
         setSiteData({
-          products: finalProducts,
+          products: finalProducts as Product[],
           materials: defaultMaterials,
-          content: finalContent,
+          content: {},
         });
 
         try {
-          localStorage.setItem('sofia_furniture_data', JSON.stringify({
+          localStorage.setItem(STORAGE_KEY, JSON.stringify({
             products: finalProducts,
             materials: defaultMaterials,
-            content: finalContent
+            content: {}
           }));
         } catch {}
       } catch (e) {
-        console.error('Error loading from Supabase:', e);
-        const stored = localStorage.getItem('sofia_furniture_data');
+        console.error('Error loading data:', e);
+        const stored = localStorage.getItem(STORAGE_KEY);
         if (stored) {
-          try {
-            setSiteData(JSON.parse(stored));
-          } catch {
-            setSiteData({
-              products: [],
-              materials: defaultMaterials,
-              content: {},
-            });
-          }
-        } else {
-          setSiteData({
-            products: [],
-            materials: defaultMaterials,
-            content: {},
-          });
+          try { setSiteData(JSON.parse(stored)); } catch {}
         }
       } finally {
         setIsLoading(false);
@@ -131,9 +87,7 @@ export function SiteDataProvider({ children }: { children: ReactNode }) {
       }
     }
 
-    if (!isInitialized) {
-      loadData();
-    }
+    if (!isInitialized) loadData();
   }, [isInitialized]);
 
   useEffect(() => {
@@ -144,106 +98,89 @@ export function SiteDataProvider({ children }: { children: ReactNode }) {
     }
   }, [siteData, isLoading, isInitialized]);
 
-  const addProduct = async (product: Omit<Product, 'id'>) => {
-    console.log('addProduct called:', product);
-    const newId = Math.max(0, ...siteData.products.map(p => p.id)) + 1;
-    const newProduct = { ...product, id: newId } as Product;
-    
-    setSiteData(prev => ({
-      ...prev,
-      products: [...prev.products, newProduct],
-    }));
-
+  const addProductHandler = async (product: Omit<Product, 'id'>) => {
+    console.log('Adding product:', product);
     try {
-      console.log('Saving to Supabase...', product);
-      await saveProduct(product);
-      console.log('Saved to Supabase successfully');
+      const newProduct = await addProduct(product);
+      console.log('Product added:', newProduct);
+      setSiteData(prev => ({
+        ...prev,
+        products: [...prev.products, newProduct as Product]
+      }));
     } catch (e) {
-      console.error('Error saving to Supabase:', e);
+      console.error('Error adding product:', e);
+      const newId = Math.max(0, ...siteData.products.map(p => p.id)) + 1;
+      const newProduct = { ...product, id: newId } as Product;
+      setSiteData(prev => ({
+        ...prev,
+        products: [...prev.products, newProduct]
+      }));
     }
   };
 
-  const updateProduct = async (id: number, updates: Partial<Product>) => {
-    setSiteData(prev => ({
-      ...prev,
-      products: prev.products.map(p =>
-        p.id === id ? { ...p, ...updates } : p
-      ),
-    }));
-
+  const updateProductHandler = async (id: number, updates: Partial<Product>) => {
     try {
       await updateProductDB(id, updates);
+      setSiteData(prev => ({
+        ...prev,
+        products: prev.products.map(p => p.id === id ? { ...p, ...updates } : p)
+      }));
     } catch (e) {
-      console.error('Error updating in Supabase:', e);
+      console.error('Error updating product:', e);
+      setSiteData(prev => ({
+        ...prev,
+        products: prev.products.map(p => p.id === id ? { ...p, ...updates } : p)
+      }));
     }
   };
 
-  const deleteProduct = async (id: number) => {
-    setSiteData(prev => ({
-      ...prev,
-      products: prev.products.filter(p => p.id !== id),
-    }));
-
+  const deleteProductHandler = async (id: number) => {
     try {
       await deleteProductDB(id);
+      setSiteData(prev => ({
+        ...prev,
+        products: prev.products.filter(p => p.id !== id)
+      }));
     } catch (e) {
-      console.error('Error deleting from Supabase:', e);
+      console.error('Error deleting product:', e);
+      setSiteData(prev => ({
+        ...prev,
+        products: prev.products.filter(p => p.id !== id)
+      }));
     }
   };
 
   const addMaterial = (material: string) => {
     if (!siteData.materials.includes(material)) {
-      setSiteData(prev => ({
-        ...prev,
-        materials: [...prev.materials, material],
-      }));
+      setSiteData(prev => ({ ...prev, materials: [...prev.materials, material] }));
     }
   };
 
   const updateContent = async (page: string, section: string, key: string, value: string) => {
     setSiteData(prev => ({
       ...prev,
-      content: {
-        ...prev.content,
-        [page]: {
-          ...(prev.content[page] || {}),
-          [key]: value,
-        },
-      },
+      content: { ...prev.content, [page]: { ...(prev.content[page] || {}), [key]: value } }
     }));
-
-    try {
-      await saveSiteContent(page, section, key, value);
-    } catch (e) {
-      console.error('Error saving to Supabase:', e);
-    }
   };
 
   const resetData = () => {
-    const defaultData = {
-      products: [],
-      materials: defaultMaterials,
-      content: {},
-    };
-    setSiteData(defaultData);
+    setSiteData({ products: [], materials: defaultMaterials, content: {} });
     localStorage.removeItem(STORAGE_KEY);
   };
 
   return (
-    <SiteDataContext.Provider
-      value={{
-        products: siteData.products,
-        materials: siteData.materials,
-        content: siteData.content,
-        isLoading,
-        addProduct,
-        updateProduct,
-        deleteProduct,
-        addMaterial,
-        updateContent,
-        resetData,
-      }}
-    >
+    <SiteDataContext.Provider value={{
+      products: siteData.products,
+      materials: siteData.materials,
+      content: siteData.content,
+      isLoading,
+      addProduct: addProductHandler,
+      updateProduct: updateProductHandler,
+      deleteProduct: deleteProductHandler,
+      addMaterial,
+      updateContent,
+      resetData
+    }}>
       {children}
     </SiteDataContext.Provider>
   );
@@ -251,8 +188,6 @@ export function SiteDataProvider({ children }: { children: ReactNode }) {
 
 export function useSiteData() {
   const context = useContext(SiteDataContext);
-  if (context === undefined) {
-    throw new Error('useSiteData must be used within a SiteDataProvider');
-  }
+  if (!context) throw new Error('useSiteData must be used within SiteDataProvider');
   return context;
 }
