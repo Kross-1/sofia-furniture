@@ -208,8 +208,8 @@ export default function RequestPage() {
 
         <div className={`${selectedProduct ? 'grid grid-cols-1 lg:grid-cols-5 gap-8' : 'max-w-2xl mx-auto'}`}>
           {/* Form */}
-          <div className={`${selectedProduct ? 'lg:col-span-3' : ''}`}>
-            <div className="bg-card text-card-foreground rounded-2xl border border-border shadow-sm p-8">
+          <div className={`${selectedProduct ? 'lg:col-span-3' : ''} flex`}>
+            <div className="bg-card text-card-foreground rounded-2xl border border-border shadow-sm p-8 w-full flex flex-col">
               <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Name */}
                 <div>
@@ -338,20 +338,20 @@ export default function RequestPage() {
 
           {/* Product Card */}
           {selectedProduct && (
-            <div className="lg:col-span-2">
-              <div className="bg-card text-card-foreground rounded-2xl border border-border shadow-sm overflow-hidden sticky top-24">
-                <div className="p-4 border-b border-border flex items-center gap-2">
+            <div className="lg:col-span-2 flex">
+              <div className="bg-card text-card-foreground rounded-2xl border border-border shadow-sm overflow-hidden flex flex-col w-full h-full">
+                <div className="p-4 border-b border-border flex items-center gap-2 flex-shrink-0">
                   <ShoppingBag className="w-5 h-5 text-accent" />
                   <h3 className="font-semibold text-foreground">Выбранный товар</h3>
                 </div>
-                <div className="relative aspect-[4/3] overflow-hidden bg-muted">
+                <div className="relative overflow-hidden bg-muted flex-shrink-0" style={{ height: '180px' }}>
                   <img
                     src={selectedProduct.image}
                     alt={selectedProduct.name}
                     className="w-full h-full object-cover"
                   />
                 </div>
-                <div className="p-5">
+                <div className="p-5 flex flex-col flex-1">
                   <p className="text-xs text-muted-foreground mb-1 uppercase tracking-wide">{selectedProduct.category}</p>
                   <h4 className="font-serif text-lg font-semibold text-foreground mb-2 line-clamp-2">
                     {selectedProduct.name}
@@ -361,7 +361,7 @@ export default function RequestPage() {
                       Материал: {selectedProduct.material}
                     </p>
                   )}
-                  <div className="text-2xl font-bold text-accent">
+                  <div className="text-2xl font-bold text-accent mt-auto">
                     {formatPrice(selectedProduct.price)}
                   </div>
                 </div>
