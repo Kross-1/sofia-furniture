@@ -3,7 +3,33 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = 'https://cblbgliuzbeobjiqsend.supabase.co';
 const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNibGJnbGl1emJlb2JqaXFzZW5kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2NTI4NjIsImV4cCI6MjA5NDIyODg2Mn0.ojPtNYjsOcIEUl3_IYtTC6IkvkEQt1dlpsSPXNSgbRk';
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+async function fetchWithRetry(url: string, options: RequestInit, retries = 3): Promise<Response> {
+  for (let i = 0; i < retries; i++) {
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 30000);
+      
+      const response = await fetch(url, {
+        ...options,
+        signal: controller.signal
+      });
+      
+      clearTimeout(timeout);
+      return response;
+    } catch (error: any) {
+      console.log(`Attempt ${i + 1} failed:`, error.message);
+      if (i === retries - 1) throw error;
+      await new Promise(r => setTimeout(r, 2000));
+    }
+  }
+  throw new Error('Max retries reached');
+}
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  global: {
+    fetch: fetchWithRetry
+  }
+});
 
 export interface User {
   id: string;
