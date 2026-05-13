@@ -1,8 +1,11 @@
-import { useState, useEffect } from 'react';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
 import { Phone, MapPin, Clock, Mail } from 'lucide-react';
 import { useAnalytics } from '../contexts/AnalyticsContext';
 import { usePageContent } from '../hooks/usePageContent';
 import { getMediaItems } from '../lib/db';
+import { useState, useEffect } from 'react';
 
 const STORAGE_KEY = 'sofia_media_items';
 
@@ -14,6 +17,22 @@ interface MediaItem {
   type?: 'image' | 'video';
 }
 
+const MAP_CENTER: [number, number] = [42.920690, 47.520862];
+const MAP_ZOOM = 16;
+
+const customIcon = L.divIcon({
+  className: 'custom-map-marker',
+  html: `<div style="width:40px;height:40px;background:#C9A96E;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+      <circle cx="12" cy="10" r="3"/>
+    </svg>
+  </div>`,
+  iconSize: [40, 40],
+  iconAnchor: [20, 40],
+  popupAnchor: [0, -40],
+});
+
 export default function ContactsPage() {
   const { trackPhoneClick } = useAnalytics();
   const { getText } = usePageContent();
@@ -21,19 +40,14 @@ export default function ContactsPage() {
 
   useEffect(() => {
     const load = async () => {
-      try {
-        const items = await getMediaItems('contacts');
-        setMedia({ contacts: items.map((item: any) => ({
-          key: item.section,
-          label: item.section,
-          description: '',
-          value: item.url,
-          type: item.type || 'image',
-        }))});
-      } catch {
-        const saved = localStorage.getItem(STORAGE_KEY);
-        if (saved) setMedia(JSON.parse(saved));
-      }
+      const items = await getMediaItems('contacts');
+      setMedia({ contacts: items.map((item: any) => ({
+        key: item.section,
+        label: item.section,
+        description: '',
+        value: item.url,
+        type: item.type || 'image',
+      }))});
     };
     load();
     const interval = setInterval(load, 2000);
@@ -47,8 +61,6 @@ export default function ContactsPage() {
   };
 
   const exteriorImage = getMedia('contacts_exterior');
-
-  
 
   const handlePhoneClick = (displayNumber: string) => {
     trackPhoneClick(displayNumber, 'Страница контактов');
@@ -168,21 +180,28 @@ export default function ContactsPage() {
 
           <div className="flex flex-col">
             <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden flex-1 min-h-[400px] lg:min-h-0">
-              <iframe
-                src="https://api-maps.yandex.ru/services/constructor/1.0/js/?um=constructor%3Ab0f6bdba1bf40e61eb94b3385213c766d1d00889f4b9b4a464485f23875b0b5b&width=500&height=400&lang=ru_RU&scroll=true"
-                width="100%"
-                height="100%"
-                frameBorder="0"
-                title={getText('contacts-map-title')}
-                allowFullScreen
-                className="w-full h-full"
-                style={{ border: 0 }}
-              />
+              <MapContainer
+                center={MAP_CENTER}
+                zoom={MAP_ZOOM}
+                style={{ width: '100%', height: '100%', minHeight: '400px' }}
+                scrollWheelZoom={false}
+              >
+                <TileLayer
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                />
+                <Marker position={MAP_CENTER} icon={customIcon}>
+                  <Popup>
+                    <strong>Мебельный салон Сафия</strong>
+                    <br />1-й Мебельный тупик, 6Б
+                    <br />Махачкала
+                  </Popup>
+                </Marker>
+              </MapContainer>
             </div>
           </div>
         </div>
 
-        {/* Exterior Image Banner */}
         {exteriorImage ? (
           <div className="rounded-2xl overflow-hidden border border-border shadow-lg">
             <img
