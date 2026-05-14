@@ -82,10 +82,10 @@ export async function getMessages(): Promise<any[]> {
   return fetchAPI('?table=Message');
 }
 
-export async function saveMessage(name: string, phone: string, comment?: string, product?: string, productId?: number, productName?: string, productPrice?: number): Promise<any> {
+export async function saveMessage(name: string, phone: string, comment?: string, product?: string): Promise<any> {
   return fetchAPI('', {
     method: 'POST',
-    body: JSON.stringify({ table: 'Message', name, phone, comment, product, productId, productName, productPrice }),
+    body: JSON.stringify({ table: 'Message', name, phone, comment, product }),
   });
 }
 
