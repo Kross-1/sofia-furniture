@@ -139,19 +139,8 @@ export default function RequestPage() {
   };
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = e.target.value.replace(/\D/g, '');
-
-    if (value.length > 0) {
-      if (value.length <= 1) {
-        value = '+' + value;
-      } else if (value.length <= 4) {
-        value = '+' + value.substring(1, 4) + ' ' + value.substring(4);
-      } else if (value.length <= 7) {
-        value = '+' + value.substring(1, 4) + ' ' + value.substring(4, 7) + ' ' + value.substring(7);
-      } else if (value.length <= 9) {
-        value = '+' + value.substring(1, 4) + ' ' + value.substring(4, 7) + '-' + value.substring(7, 9) + '-' + value.substring(9, 11);
-      }
-    }
+    // Просто разрешаем вводить цифры, плюс, скобки, тире и пробелы
+    const value = e.target.value.replace(/[^\d+()\-\s]/g, '');
 
     setFormData((prev) => ({ ...prev, phone: value }));
 
