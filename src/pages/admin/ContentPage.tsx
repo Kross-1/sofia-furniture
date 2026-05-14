@@ -471,19 +471,20 @@ export default function ContentPage() {
           await deleteMediaItem(item.id);
         }
       }
-    } catch {}
-    try {
       for (const item of mediaItems[activeSection]) {
         if (item.value) {
           await saveMediaItem(activeSection, item.key, item.type || 'image', item.value);
         }
       }
-    } catch {}
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(mediaItems));
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    setIsSaving(false);
-    setSaveSuccess(true);
-    setTimeout(() => setSaveSuccess(false), 3000);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(mediaItems));
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
+    } catch (e) {
+      console.error('Save error:', e);
+      alert('Ошибка при сохранении: ' + e);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleResetSection = () => {
