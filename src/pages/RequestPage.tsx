@@ -206,11 +206,11 @@ export default function RequestPage() {
           </p>
         </div>
 
-        <div className={`${selectedProduct ? 'grid grid-cols-1 lg:grid-cols-5 gap-6 lg:gap-8' : 'max-w-2xl mx-auto'}`}>
+        <div className={`${selectedProduct ? 'grid grid-cols-1 lg:grid-cols-5 gap-6 lg:gap-8 items-stretch' : 'max-w-2xl mx-auto'}`}>
           {/* Form */}
-          <div className={selectedProduct ? 'lg:col-span-3' : ''}>
-            <div className="bg-card text-card-foreground rounded-2xl border border-border shadow-sm p-6 lg:p-8 min-h-[500px] lg:min-h-[600px]">
-              <form onSubmit={handleSubmit} className="space-y-6">
+          <div className={selectedProduct ? 'lg:col-span-3 flex' : ''}>
+            <div className="bg-card text-card-foreground rounded-2xl border border-border shadow-sm p-6 lg:p-8 w-full flex flex-col">
+              <form onSubmit={handleSubmit} className="space-y-6 flex flex-col flex-1">
                 {/* Name */}
                 <div>
                   <label
@@ -315,13 +315,13 @@ export default function RequestPage() {
 
           {/* Product Card */}
           {selectedProduct && (
-            <div className="lg:col-span-2">
-              <div className="bg-card text-card-foreground rounded-2xl border border-border shadow-sm overflow-hidden min-h-[500px] lg:min-h-[600px]">
+            <div className="lg:col-span-2 flex">
+              <div className="bg-card text-card-foreground rounded-2xl border border-border shadow-sm overflow-hidden w-full flex flex-col">
                 <div className="p-4 border-b border-border flex items-center gap-2 flex-shrink-0">
                   <ShoppingBag className="w-5 h-5 text-accent" />
                   <h3 className="font-semibold text-foreground">Выбранный товар</h3>
                 </div>
-                <div className="relative overflow-hidden bg-muted" style={{ height: '180px' }}>
+                <div className="relative overflow-hidden bg-muted flex-shrink-0" style={{ height: '180px' }}>
                   <img
                     src={selectedProduct.image}
                     alt={selectedProduct.name}
