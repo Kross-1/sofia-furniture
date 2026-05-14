@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { saveSiteSetting } from '../lib/db';
 
 // Типы для контента страниц
 export interface PageTextItem {
@@ -205,6 +206,7 @@ export function usePageContent() {
       setTexts(prev => prev.map(t => t.id === id ? { ...t, text: newText } : t));
     } catch (e) {
       console.error('Ошибка сохранения:', e);
+      alert('Не удалось сохранить текст');
     }
   }, []);
   const findDuplicateTexts = useCallback((id: string): PageTextItem[] => { return []; }, []);
