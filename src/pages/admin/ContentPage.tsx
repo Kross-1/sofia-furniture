@@ -76,12 +76,7 @@ const sections = [
 ];
 
 const fileToDataUrl = (file: File): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result as string);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
+  return Promise.resolve('');
 };
 
 function ImageUploader({
@@ -99,15 +94,7 @@ function ImageUploader({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFile = async (file: File) => {
-    setIsLoading(true);
-    setPreviewError(false);
-    try {
-      const url = await fileToDataUrl(file);
-      onChange(url);
-    } catch {
-      setPreviewError(true);
-    }
-    setIsLoading(false);
+    alert('Прямая загрузка отключена. Используйте хостинг картинок (imgbb, postimages) и вставьте ссылку.');
   };
 
   const handleDrop = useCallback((e: React.DragEvent) => {
@@ -269,15 +256,7 @@ function VideoUploader({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFile = async (file: File) => {
-    setIsLoading(true);
-    setPreviewError(false);
-    try {
-      const url = await fileToDataUrl(file);
-      onChange(url);
-    } catch {
-      setPreviewError(true);
-    }
-    setIsLoading(false);
+    alert('Прямая загрузка отключена. Используйте хостинг картинок (imgbb, postimages) и вставьте ссылку.');
   };
 
   const handleDrop = useCallback((e: React.DragEvent) => {
