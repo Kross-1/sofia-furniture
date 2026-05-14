@@ -14,15 +14,15 @@ async function fetchAPI(endpoint: string, options?: RequestInit) {
 
 function getCategoryId(categoryName: string): string {
   const map: Record<string, string> = {
-    '¦á¦¬¦-¦¬TÌ¦-TË¦¦ ¦¦¦-TÀ¦-¦¬TÂTÃTÀTË': '1b5f4171-72f7-495c-9da6-a68c2485d577',
-    '¦â¦Ò TÂTÃ¦-¦-TË': '980af499-5151-48e6-acbe-7ac9a0b8cdc0',
-    '¦Ú¦-¦-TÁ¦-¦¬¦¬': 'e10123b4-e724-4cb8-940e-52cee03a4956',
-    '¦áTÂ¦-¦¬TË': 'fd30f952-4fe5-47c7-a2db-5afac550ddef',
-    '¦áTÂTÃ¦¬TÌTÏ': 'd7560113-5da3-4ad0-bc1d-92e7198c74d5',
-    '¦å¦-¦¬¦¬TË': '5be7b0fb-3326-4ea2-be42-c37085b11cf7',
-    '¦Ô¦¬¦-¦-¦-TË': '4b0beeca-988c-4207-a2bf-e25e18675491',
+    'ï¿½á¦¬ï¿½-ï¿½ï¿½TÌ¦-TË¦ï¿½ ï¿½ï¿½ï¿½-Tï¿½ï¿½-ï¿½ï¿½Tï¿½Tï¿½Tï¿½Tï¿½': '1b5f4171-72f7-495c-9da6-a68c2485d577',
+    'ï¿½ï¿½ï¿½ Tï¿½TÃ¦-ï¿½-Tï¿½': '980af499-5151-48e6-acbe-7ac9a0b8cdc0',
+    'ï¿½Ú¦-ï¿½-Tï¿½ï¿½-ï¿½ï¿½ï¿½ï¿½': 'e10123b4-e724-4cb8-940e-52cee03a4956',
+    'ï¿½ï¿½TÂ¦-ï¿½ï¿½Tï¿½': 'fd30f952-4fe5-47c7-a2db-5afac550ddef',
+    'ï¿½ï¿½Tï¿½TÃ¦ï¿½Tï¿½Tï¿½': 'd7560113-5da3-4ad0-bc1d-92e7198c74d5',
+    'ï¿½ï¿½-ï¿½ï¿½ï¿½ï¿½Tï¿½': '5be7b0fb-3326-4ea2-be42-c37085b11cf7',
+    'ï¿½Ô¦ï¿½ï¿½-ï¿½-ï¿½-Tï¿½': '4b0beeca-988c-4207-a2bf-e25e18675491',
   };
-  return map[categoryName] || map['¦á¦¬¦-¦¬TÌ¦-TË¦¦ ¦¦¦-TÀ¦-¦¬TÂTÃTÀTË'];
+  return map[categoryName] || map['ï¿½á¦¬ï¿½-ï¿½ï¿½TÌ¦-TË¦ï¿½ ï¿½ï¿½ï¿½-Tï¿½ï¿½-ï¿½ï¿½Tï¿½Tï¿½Tï¿½Tï¿½'];
 }
 
 export async function getProducts(): Promise<any[]> {
@@ -82,10 +82,10 @@ export async function getMessages(): Promise<any[]> {
   return fetchAPI('?table=Message');
 }
 
-export async function saveMessage(name: string, phone: string, comment?: string, product?: string): Promise<any> {
+export async function saveMessage(name: string, phone: string, comment?: string, product?: string, productId?: number, productName?: string, productPrice?: number): Promise<any> {
   return fetchAPI('', {
     method: 'POST',
-    body: JSON.stringify({ table: 'Message', name, phone, comment, product }),
+    body: JSON.stringify({ table: 'Message', name, phone, comment, product, productId, productName, productPrice }),
   });
 }
 
