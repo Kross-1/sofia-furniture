@@ -94,7 +94,29 @@ function ImageUploader({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFile = async (file: File) => {
-    alert('Прямая загрузка отключена. Используйте хостинг картинок (imgbb, postimages) и вставьте ссылку.');
+    setIsLoading(true);
+    setPreviewError(false);
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+
+      const response = await fetch('https://api.imgbb.com/1/upload?key=f99478039075afbc5c9a4b7cedeed1e3', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        onChange(result.data.url);
+      } else {
+        throw new Error(result.error?.message || 'Ошибка загрузки');
+      }
+    } catch (e) {
+      console.error(e);
+      setPreviewError(true);
+      alert('Ошибка при загрузке: ' + e);
+    }
+    setIsLoading(false);
   };
 
   const handleDrop = useCallback((e: React.DragEvent) => {
