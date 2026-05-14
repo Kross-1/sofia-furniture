@@ -311,29 +311,6 @@ export default function RequestPage() {
                 </p>
               </form>
             </div>
-
-            {/* Contact Info */}
-            <div className="mt-8 text-center">
-              <p className="text-muted-foreground mb-4" data-text="request-contact-text">
-                {getText('request-contact-text')}
-              </p>
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <a
-                  href={`tel:${getText('common-phone-1').replace(/[^+\d]/g, '')}`}
-                  className="text-accent hover:underline font-medium"
-                  data-text="phone-1"
-                >
-                  {getText('common-phone-1')}
-                </a>
-                <a
-                  href={`tel:${getText('common-phone-2').replace(/[^+\d]/g, '')}`}
-                  className="text-accent hover:underline font-medium"
-                  data-text="phone-2"
-                >
-                  {getText('common-phone-2')}
-                </a>
-              </div>
-            </div>
           </div>
 
           {/* Product Card */}
@@ -365,6 +342,32 @@ export default function RequestPage() {
                     {formatPrice(selectedProduct.price)}
                   </div>
                 </div>
+              </div>
+</div>
+            )}
+          </div>
+
+          {/* Contact Info */}
+          {!selectedProduct && (
+            <div className="mt-8 text-center max-w-2xl mx-auto">
+              <p className="text-muted-foreground mb-4" data-text="request-contact-text">
+                {getText('request-contact-text')}
+              </p>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <a
+                  href={`tel:${getText('common-phone-1').replace(/[^+\d]/g, '')}`}
+                  className="text-accent hover:underline font-medium"
+                  data-text="phone-1"
+                >
+                  {getText('common-phone-1')}
+                </a>
+                <a
+                  href={`tel:${getText('common-phone-2').replace(/[^+\d]/g, '')}`}
+                  className="text-accent hover:underline font-medium"
+                  data-text="phone-2"
+                >
+                  {getText('common-phone-2')}
+                </a>
               </div>
             </div>
           )}
