@@ -1,23 +1,16 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { saveSiteSetting } from '../lib/db'; // Добавляем импорт
 
-// ... (оставляем интерфейсы как есть)
-
-export function usePageContent() {
-  // ... (оставляем состояние как есть)
-
-  const updateText = useCallback(async (id: string, newText: string) => {
-    try {
-      await saveSiteSetting(id, newText);
-      // Если нужно, здесь можно обновить локальное состояние `texts`
-      console.log(`Текст ${id} сохранён в БД`);
-    } catch (e) {
-      console.error('Ошибка сохранения текста:', e);
-      alert('Не удалось сохранить текст в базу данных');
-    }
-  }, []);
-
-  // ... (оставляем остальные методы)
+// Типы для контента страниц
+export interface PageTextItem {
+  id: string;
+  page: string;
+  section: string;
+  label: string;
+  text: string;
+  htmlKey: string;
+  isGlobal?: boolean;
+  locations?: string[];
+  order?: number;
 }
 
 export interface IconItem {
@@ -201,77 +194,19 @@ const pageTexts: PageTextItem[] = [
 const allDefaultTexts: PageTextItem[] = [...globalTexts, ...pageTexts];
 
 export function usePageContent() {
-  const [texts] = useState<PageTextItem[]>(allDefaultTexts);
+  const [texts, setTexts] = useState<PageTextItem[]>(allDefaultTexts);
   const [icons] = useState<IconItem[]>(defaultIcons);
   const [categories] = useState<CategoryItem[]>(defaultCategories);
   const [productCategories] = useState<ProductCategoryItem[]>(defaultProductCategories);
 
-  const getText = useCallback((id: string): string => {
-    const item = texts.find(t => t.id === id);
-    if (item) {
-      if (id === 'footer-copyright' || id === 'common-copyright') {
-        return item.text.replace('{year}', new Date().getFullYear().toString());
-      }
-      return item.text;
+  const updateText = useCallback(async (id: string, newText: string) => {
+    try {
+      await saveSiteSetting(id, newText);
+      setTexts(prev => prev.map(t => t.id === id ? { ...t, text: newText } : t));
+    } catch (e) {
+      console.error('Ошибка сохранения:', e);
     }
-    return '';
-  }, [texts]);
-
-  const getTextsForPage = useCallback((pageName: string): PageTextItem[] => {
-    const filtered = texts.filter(t => {
-      if (pageName === 'Общие') return t.page === 'Общие';
-      return t.page === pageName;
-    });
-    return filtered.sort((a, b) => (a.order || 0) - (b.order || 0));
-  }, [texts]);
-
-  const getGlobalTexts = useCallback((): PageTextItem[] => {
-    return texts.filter(t => t.isGlobal).sort((a, b) => (a.order || 0) - (b.order || 0));
-  }, [texts]);
-
-  const getAllPagesForEditor = useMemo(() => {
-    const pages = ['Общие', 'Главная', 'Каталог', 'О нас', 'Контакты', 'Заявка'];
-    return pages.map(page => ({
-      name: page,
-      texts: getTextsForPage(page),
-      globalCount: page === 'Общие'
-        ? texts.filter(t => t.page === 'Общие').length
-        : texts.filter(t => t.isGlobal && t.locations?.some(loc => loc.includes(page))).length,
-    }));
-  }, [texts, getTextsForPage]);
-
-  const getIconsByCategory = useCallback((category: string): IconItem[] => {
-    return icons.filter(icon => icon.category === category).sort((a, b) => a.order - b.order);
-  }, [icons]);
-
-  const getIcon = useCallback((id: string): IconItem | undefined => {
-    return defaultIcons.find(i => i.id === id);
   }, []);
-
-  const getCategories = useCallback((): CategoryItem[] => {
-    return [...categories].sort((a, b) => a.order - b.order);
-  }, [categories]);
-
-  const getProductCategories = useCallback((): ProductCategoryItem[] => {
-    return [...productCategories].sort((a, b) => a.order - b.order);
-  }, [productCategories]);
-
-  const getEnabledProductCategories = useCallback((): ProductCategoryItem[] => {
-    return productCategories.filter(c => c.enabled).sort((a, b) => a.order - b.order);
-  }, [productCategories]);
-
-  const updateCategory = useCallback((id: string, updates: Partial<CategoryItem>) => {}, []);
-  const addCategory = useCallback((category: Omit<CategoryItem, 'id'>): CategoryItem => { return category as CategoryItem; }, []);
-  const deleteCategory = useCallback((id: string) => {}, []);
-  const resetCategoriesToDefaults = useCallback(() => {}, []);
-
-  const updateProductCategory = useCallback((id: string, updates: Partial<ProductCategoryItem>) => {}, []);
-  const addProductCategory = useCallback((category: Omit<ProductCategoryItem, 'id'>): ProductCategoryItem => { return category as ProductCategoryItem; }, []);
-  const deleteProductCategory = useCallback((id: string) => {}, []);
-  const resetProductCategoriesToDefaults = useCallback(() => {}, []);
-
-  const resetToDefaults = useCallback(() => {}, []);
-  const updateText = useCallback((id: string, newText: string) => {}, []);
   const findDuplicateTexts = useCallback((id: string): PageTextItem[] => { return []; }, []);
   const updateIcon = useCallback((id: string, updates: Partial<IconItem>) => {}, []);
   const addIcon = useCallback((icon: Omit<IconItem, 'id'>): IconItem => { return icon as IconItem; }, []);
@@ -287,7 +222,7 @@ export function usePageContent() {
     getText,
     getTextsForPage,
     getGlobalTexts,
-    setTexts: () => {},
+    setTexts,
     getAllPagesForEditor,
     icons,
     getIconsByCategory,
