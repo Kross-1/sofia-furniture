@@ -86,17 +86,27 @@ export function SiteDataProvider({ children }: { children: ReactNode }) {
   };
 
   const updateProductHandler = async (id: number, updates: Partial<Product>) => {
-    setSiteData(prev => ({
-      ...prev,
-      products: prev.products.map(p => p.id === id ? { ...p, ...updates } : p)
-    }));
+    try {
+      await updateProductDB(id, updates);
+      setSiteData(prev => ({
+        ...prev,
+        products: prev.products.map(p => p.id === id ? { ...p, ...updates } : p)
+      }));
+    } catch (e) {
+      console.error('Error updating product in DB:', e);
+    }
   };
 
   const deleteProductHandler = async (id: number) => {
-    setSiteData(prev => ({
-      ...prev,
-      products: prev.products.filter(p => p.id !== id)
-    }));
+    try {
+      await deleteProductDB(id);
+      setSiteData(prev => ({
+        ...prev,
+        products: prev.products.filter(p => p.id !== id)
+      }));
+    } catch (e) {
+      console.error('Error deleting product from DB:', e);
+    }
   };
 
   const addMaterial = (material: string) => {
