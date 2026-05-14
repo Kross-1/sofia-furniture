@@ -316,7 +316,7 @@ export default function RequestPage() {
 {/* Product Card */}
           {selectedProduct && (
             <div className="lg:col-span-2 flex">
-              <div className="bg-card text-card-foreground rounded-2xl border border-border shadow-sm p-4 w-full flex flex-col">
+              <div className="bg-card text-card-foreground rounded-2xl border border-border shadow-sm p-3 lg:p-4 w-full flex flex-col">
                 <div className="flex items-center gap-2 mb-4">
                   <ShoppingBag className="w-5 h-5 text-accent" />
                   <h3 className="font-semibold text-foreground">Выбранный товар</h3>
