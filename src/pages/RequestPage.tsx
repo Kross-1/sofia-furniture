@@ -345,13 +345,6 @@ export default function RequestPage() {
               </div>
             </div>
           )}
-                  <div className="text-2xl font-bold text-accent mt-auto">
-                    {formatPrice(selectedProduct.price)}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
 
           {/* Contact Info */}
           {!selectedProduct && (
