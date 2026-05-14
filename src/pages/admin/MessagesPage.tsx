@@ -31,7 +31,7 @@ export default function MessagesPage() {
           date: msg.createdAt || msg.date || new Date().toISOString(),
           status: msg.status || 'new',
           productId: msg.productId,
-          productName: msg.productName,
+          productName: msg.productName || msg.product,
           productPrice: msg.productPrice,
         })));
       } catch {
