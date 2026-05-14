@@ -37,7 +37,7 @@ export default function RequestPage() {
   const [searchParams] = useSearchParams();
   const [formData, setFormData] = useState<FormData>({
     name: '',
-    phone: '',
+    phone: '+7',
     comment: '',
   });
   const [errors, setErrors] = useState<FormErrors>({});
@@ -139,10 +139,22 @@ export default function RequestPage() {
   };
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Просто разрешаем вводить цифры, плюс, скобки, тире и пробелы
-    const value = e.target.value.replace(/[^\d+()\-\s]/g, '');
+    let value = e.target.value;
 
-    setFormData((prev) => ({ ...prev, phone: value }));
+    // Всегда начинаем с +7
+    if (!value.startsWith('+7')) {
+      value = '+7';
+    }
+
+    // После +7 разрешаем только цифры
+    const digits = value.slice(2).replace(/\D/g, '');
+    
+    // Ограничиваем длину 10 цифрами (всего 12 символов: +7 и 10 цифр)
+    const limitedDigits = digits.slice(0, 10);
+    
+    const formatted = '+7' + limitedDigits;
+
+    setFormData((prev) => ({ ...prev, phone: formatted }));
 
     if (errors.phone) {
       setErrors((prev) => ({ ...prev, phone: undefined }));
