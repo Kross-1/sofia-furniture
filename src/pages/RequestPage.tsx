@@ -206,11 +206,11 @@ export default function RequestPage() {
           </p>
         </div>
 
-        <div className={`${selectedProduct ? 'grid grid-cols-1 lg:grid-cols-5 gap-8 items-stretch' : 'max-w-2xl mx-auto'}`}>
+        <div className={`${selectedProduct ? 'grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 items-stretch' : 'max-w-2xl mx-auto'}`}>
           {/* Form */}
-          <div className={`${selectedProduct ? 'lg:col-span-3' : ''} flex flex-col`}>
-            <div className="bg-card text-card-foreground rounded-2xl border border-border shadow-sm p-8 flex flex-col flex-1">
-              <form onSubmit={handleSubmit} className="space-y-6 flex flex-col flex-1">
+          <div className={`${selectedProduct ? '' : ''} flex flex-col h-full`}>
+            <div className="bg-card text-card-foreground rounded-2xl border border-border shadow-sm p-6 lg:p-8 flex flex-col flex-1 min-h-[400px] lg:min-h-0">
+              <form onSubmit={handleSubmit} className="space-y-6 flex flex-col flex-1 h-full">
                 {/* Name */}
                 <div>
                   <label
@@ -338,8 +338,8 @@ export default function RequestPage() {
 
           {/* Product Card */}
           {selectedProduct && (
-            <div className="lg:col-span-2 flex flex-col">
-              <div className="bg-card text-card-foreground rounded-2xl border border-border shadow-sm overflow-hidden flex flex-col flex-1">
+            <div className="flex flex-col h-full">
+              <div className="bg-card text-card-foreground rounded-2xl border border-border shadow-sm overflow-hidden flex flex-col flex-1 min-h-[400px] lg:min-h-0">
                 <div className="p-4 border-b border-border flex items-center gap-2 flex-shrink-0">
                   <ShoppingBag className="w-5 h-5 text-accent" />
                   <h3 className="font-semibold text-foreground">Выбранный товар</h3>
