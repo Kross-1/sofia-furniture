@@ -1,7 +1,6 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { saveSiteSetting } from '../lib/db';
 
-// Типы для контента страниц
 export interface PageTextItem {
   id: string;
   page: string;
@@ -113,7 +112,7 @@ const globalTexts: PageTextItem[] = [
 const pageTexts: PageTextItem[] = [
   { id: 'home-hero-badge', page: 'Главная', section: 'hero', label: 'Главная: Бейдж', text: 'Мебельный салон', htmlKey: '[data-text="hero-badge"]', order: 1 },
   { id: 'home-hero-title', page: 'Главная', section: 'hero', label: 'Главная: Заголовок', text: 'Создайте уют в вашем доме с салоном «Сафия»', htmlKey: '[data-text="hero-title"]', order: 2 },
-  { id: 'home-hero-subtitle', page: 'Главная', section: 'hero', label: 'Главная: Подзаголовок', text: 'Широкий ассортимент качественной мебели и ковров ручной работы. Более 5 лет радуем жителей Махачкалы стильными решениями для дома.', htmlKey: '[data-text="hero-subtitle"]', order: 3 },
+  { id: 'home-hero-subtitle', page: 'Главная', section: 'hero', label: 'Главная: Подзаголовок', text: 'Широкий ассортимент качественной мебели и ковров ручной работы. Более 5 лет радуем жителей Махачкалы стильными решениями для дома.', htmlKey: '[data-text="home-hero-subtitle"]', order: 3 },
   { id: 'home-hero-btn', page: 'Главная', section: 'hero', label: 'Главная: Кнопка каталога', text: 'Перейти в каталог', htmlKey: '[data-text="hero-btn"]', order: 4 },
   { id: 'home-hero-btn-contacts', page: 'Главная', section: 'hero', label: 'Главная: Кнопка контактов', text: 'Наши контакты', htmlKey: '[data-text="hero-btn-contacts"]', order: 5 },
   { id: 'home-features-title', page: 'Главная', section: 'features', label: 'Главная: Заголовок преимуществ', text: 'Почему выбирают нас', htmlKey: '[data-text="features-title"]', order: 6 },
@@ -200,6 +199,40 @@ export function usePageContent() {
   const [categories] = useState<CategoryItem[]>(defaultCategories);
   const [productCategories] = useState<ProductCategoryItem[]>(defaultProductCategories);
 
+  const getText = useCallback((id: string): string => {
+    const item = texts.find(t => t.id === id);
+    if (item) {
+      if (id === 'footer-copyright' || id === 'common-copyright') {
+        return item.text.replace('{year}', new Date().getFullYear().toString());
+      }
+      return item.text;
+    }
+    return '';
+  }, [texts]);
+
+  const getTextsForPage = useCallback((pageName: string): PageTextItem[] => {
+    const filtered = texts.filter(t => {
+      if (pageName === 'Общие') return t.page === 'Общие';
+      return t.page === pageName;
+    });
+    return filtered.sort((a, b) => (a.order || 0) - (b.order || 0));
+  }, [texts]);
+
+  const getGlobalTexts = useCallback((): PageTextItem[] => {
+    return texts.filter(t => t.isGlobal).sort((a, b) => (a.order || 0) - (b.order || 0));
+  }, [texts]);
+
+  const getAllPagesForEditor = useMemo(() => {
+    const pages = ['Общие', 'Главная', 'Каталог', 'О нас', 'Контакты', 'Заявка'];
+    return pages.map(page => ({
+      name: page,
+      texts: getTextsForPage(page),
+      globalCount: page === 'Общие'
+        ? texts.filter(t => t.page === 'Общие').length
+        : texts.filter(t => t.isGlobal && t.locations?.some(loc => loc.includes(page))).length,
+    }));
+  }, [texts, getTextsForPage]);
+
   const updateText = useCallback(async (id: string, newText: string) => {
     try {
       await saveSiteSetting(id, newText);
@@ -209,6 +242,38 @@ export function usePageContent() {
       alert('Не удалось сохранить текст');
     }
   }, []);
+
+  const getIconsByCategory = useCallback((category: string): IconItem[] => {
+    return icons.filter(icon => icon.category === category).sort((a, b) => a.order - b.order);
+  }, [icons]);
+
+  const getIcon = useCallback((id: string): IconItem | undefined => {
+    return defaultIcons.find(i => i.id === id);
+  }, []);
+
+  const getCategories = useCallback((): CategoryItem[] => {
+    return [...categories].sort((a, b) => a.order - b.order);
+  }, [categories]);
+
+  const getProductCategories = useCallback((): ProductCategoryItem[] => {
+    return [...productCategories].sort((a, b) => a.order - b.order);
+  }, [productCategories]);
+
+  const getEnabledProductCategories = useCallback((): ProductCategoryItem[] => {
+    return productCategories.filter(c => c.enabled).sort((a, b) => a.order - b.order);
+  }, [productCategories]);
+
+  const updateCategory = useCallback((id: string, updates: Partial<CategoryItem>) => {}, []);
+  const addCategory = useCallback((category: Omit<CategoryItem, 'id'>): CategoryItem => { return category as CategoryItem; }, []);
+  const deleteCategory = useCallback((id: string) => {}, []);
+  const resetCategoriesToDefaults = useCallback(() => {}, []);
+
+  const updateProductCategory = useCallback((id: string, updates: Partial<ProductCategoryItem>) => {}, []);
+  const addProductCategory = useCallback((category: Omit<ProductCategoryItem, 'id'>): ProductCategoryItem => { return category as ProductCategoryItem; }, []);
+  const deleteProductCategory = useCallback((id: string) => {}, []);
+  const resetProductCategoriesToDefaults = useCallback(() => {}, []);
+
+  const resetToDefaults = useCallback(() => {}, []);
   const findDuplicateTexts = useCallback((id: string): PageTextItem[] => { return []; }, []);
   const updateIcon = useCallback((id: string, updates: Partial<IconItem>) => {}, []);
   const addIcon = useCallback((icon: Omit<IconItem, 'id'>): IconItem => { return icon as IconItem; }, []);
