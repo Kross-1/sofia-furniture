@@ -313,22 +313,22 @@ export default function RequestPage() {
             </div>
           </div>
 
-          {/* Product Card */}
+{/* Product Card */}
           {selectedProduct && (
             <div className="lg:col-span-2 flex">
-              <div className="bg-card text-card-foreground rounded-2xl border border-border shadow-sm overflow-hidden w-full flex flex-col">
-                <div className="p-4 border-b border-border flex items-center gap-2 flex-shrink-0">
+              <div className="bg-card text-card-foreground rounded-2xl border border-border shadow-sm p-4 w-full flex flex-col">
+                <div className="flex items-center gap-2 mb-4">
                   <ShoppingBag className="w-5 h-5 text-accent" />
                   <h3 className="font-semibold text-foreground">Выбранный товар</h3>
                 </div>
-                <div className="relative overflow-hidden bg-muted flex-shrink-0" style={{ height: '180px' }}>
+                <div className="relative overflow-hidden bg-muted rounded-xl mb-4" style={{ height: '180px' }}>
                   <img
                     src={selectedProduct.image}
                     alt={selectedProduct.name}
                     className="w-full h-full object-cover"
                   />
                 </div>
-                <div className="p-5">
+                <div className="flex-1 flex flex-col">
                   <p className="text-xs text-muted-foreground mb-1 uppercase tracking-wide">{selectedProduct.category}</p>
                   <h4 className="font-serif text-lg font-semibold text-foreground mb-2 line-clamp-2">
                     {selectedProduct.name}
@@ -338,6 +338,13 @@ export default function RequestPage() {
                       Материал: {selectedProduct.material}
                     </p>
                   )}
+                  <div className="text-2xl font-bold text-accent mt-auto">
+                    {formatPrice(selectedProduct.price)}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
                   <div className="text-2xl font-bold text-accent mt-auto">
                     {formatPrice(selectedProduct.price)}
                   </div>
