@@ -107,8 +107,8 @@ export default async function handler(req, res) {
 
       if (t === 'Message') {
         const rows = await q(
-          `INSERT INTO "Message" (name, phone, comment, product, productId, productName, productPrice, status, "createdAt") VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW()) RETURNING *`,
-          [values.name, values.phone, values.comment || null, values.product || null, values.productId || null, values.productName || null, values.productPrice || null, values.status || 'new']
+          `INSERT INTO "Message" (name, phone, comment, product, status, "createdAt") VALUES ($1, $2, $3, $4, $5, NOW()) RETURNING *`,
+          [values.name, values.phone, values.comment || null, values.product || null, values.status || 'new']
         );
         invalidateCache('Message');
         return res.status(201).json(rows[0]);
