@@ -1,16 +1,23 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { saveSiteSetting } from '../lib/db'; // Добавляем импорт
 
-// Типы для контента страниц
-export interface PageTextItem {
-  id: string;
-  page: string;
-  section: string;
-  label: string;
-  text: string;
-  htmlKey: string;
-  isGlobal?: boolean;
-  locations?: string[];
-  order?: number;
+// ... (оставляем интерфейсы как есть)
+
+export function usePageContent() {
+  // ... (оставляем состояние как есть)
+
+  const updateText = useCallback(async (id: string, newText: string) => {
+    try {
+      await saveSiteSetting(id, newText);
+      // Если нужно, здесь можно обновить локальное состояние `texts`
+      console.log(`Текст ${id} сохранён в БД`);
+    } catch (e) {
+      console.error('Ошибка сохранения текста:', e);
+      alert('Не удалось сохранить текст в базу данных');
+    }
+  }, []);
+
+  // ... (оставляем остальные методы)
 }
 
 export interface IconItem {
