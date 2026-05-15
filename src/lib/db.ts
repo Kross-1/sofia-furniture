@@ -66,7 +66,7 @@ async function fetchAPI(endpoint: string, options?: RequestInit, cacheKey?: stri
   return data;
 }
 
-function getCategoryId(categoryName: string): string {
+export function getCategoryId(categoryName: string): string {
   const map: Record<string, string> = {
     'Спальные гарнитуры': '468a0859-8f3d-4bd4-80df-8084dbdde175',
     'ТВ тумбы': '3dd8bc4c-94c1-4d7f-8587-915515741787',
