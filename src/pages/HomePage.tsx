@@ -176,6 +176,7 @@ export default function HomePage() {
                       src={iconSrc}
                       alt={getText(adv.titleK)}
                       className="w-9 h-9 object-contain"
+                      loading="lazy"
                       style={{ filter: 'brightness(0) saturate(100%) invert(63%) sepia(58%) saturate(580%) hue-rotate(2deg) brightness(95%) contrast(89%)' }}
                     />
                   </div>
@@ -224,6 +225,7 @@ export default function HomePage() {
                       src={iconSrc}
                       alt={category.name}
                       className="w-9 h-9 object-contain"
+                      loading="lazy"
                       style={{ filter: 'brightness(0) saturate(100%) invert(63%) sepia(58%) saturate(580%) hue-rotate(2deg) brightness(95%) contrast(89%)' }}
                       onError={(e) => {
                         (e.target as HTMLImageElement).src = '/icons/Диваны.png';

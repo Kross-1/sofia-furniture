@@ -93,7 +93,7 @@ export default function Header() {
 
             {/* Phone Numbers - Desktop */}
             <div className="hidden lg:flex items-center gap-4">
-              <SocialLinks className="hidden xl:flex items-center gap-3" />
+              <SocialLinks className="hidden lg:flex items-center gap-3" />
               <a
                 href={`tel:${formatPhoneForTel(phone1)}`}
                 className="flex items-center gap-2 text-sm font-medium text-foreground/80 hover:text-accent transition-colors"

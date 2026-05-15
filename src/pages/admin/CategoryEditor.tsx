@@ -319,7 +319,7 @@ export default function CategoryEditor() {
                       type="text"
                       value={editName}
                       onChange={(e) => setEditName(e.target.value)}
-                      className="w-full px-3 py-2 border border-input rounded-lg focus:ring-2 focus:ring-accent focus:border-accent text-sm bg-background text-foreground"
+                      className="w-full px-3 py-2 border border-input rounded-lg focus:ring-2 focus:ring-accent focus:border-accent text-base bg-background text-foreground"
                     />
                   </div>
                   <div>
@@ -328,7 +328,7 @@ export default function CategoryEditor() {
                       type="text"
                       value={editLink}
                       onChange={(e) => setEditLink(e.target.value)}
-                      className="w-full px-3 py-2 border border-input rounded-lg focus:ring-2 focus:ring-accent focus:border-accent text-sm bg-background text-foreground"
+                      className="w-full px-3 py-2 border border-input rounded-lg focus:ring-2 focus:ring-accent focus:border-accent text-base bg-background text-foreground"
                     />
                   </div>
 
@@ -367,7 +367,7 @@ export default function CategoryEditor() {
                         value={editCustomIconUrl}
                         onChange={(e) => setEditCustomIconUrl(e.target.value)}
                         placeholder="https://example.com/icon.png"
-                        className="w-full px-3 py-2 border border-input rounded-lg focus:ring-2 focus:ring-accent focus:border-accent text-sm bg-background text-foreground"
+                        className="w-full px-3 py-2 border border-input rounded-lg focus:ring-2 focus:ring-accent focus:border-accent text-base bg-background text-foreground"
                       />
                     ) : (
                       <div className="grid grid-cols-4 gap-1">

@@ -37,6 +37,7 @@ function ImageBlock({ src, alt }: { src: string; alt: string }) {
         src={src}
         alt={alt}
         className="w-full h-full object-cover"
+        loading="lazy"
         style={{ objectFit: 'cover' }}
         onLoad={() => setLoaded(true)}
         onError={() => setError(true)}

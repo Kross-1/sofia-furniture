@@ -209,6 +209,7 @@ export default function ContactsPage() {
             <img
               src={exteriorImage}
               alt="Мебельный салон Сафия"
+              loading="lazy"
               className="w-full h-[300px] md:h-[400px] object-cover"
             />
           </div>

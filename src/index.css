@@ -80,7 +80,7 @@
   }
 
   body {
-    @apply bg-background text-foreground font-sans antialiased;
+    @apply bg-background text-foreground font-sans antialiased overflow-x-hidden;
     font-feature-settings: "ss01", "cv11";
   }
 
@@ -194,7 +194,7 @@
   }
 
   .input-field {
-    @apply w-full px-4 py-3 rounded-lg border border-input bg-background text-foreground
+    @apply w-full px-4 py-3 rounded-lg border border-input bg-background text-foreground text-base
            placeholder:text-muted-foreground
            focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent
            transition-all duration-200;

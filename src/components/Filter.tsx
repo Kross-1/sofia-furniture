@@ -100,7 +100,7 @@ export default function Filter({
                 onPriceChange([Number(e.target.value), priceRange[1]])
               }
               placeholder="От"
-              className="input-field text-sm"
+              className="input-field"
             />
           </div>
           <span className="text-muted-foreground">—</span>
@@ -112,7 +112,7 @@ export default function Filter({
                 onPriceChange([priceRange[0], Number(e.target.value)])
               }
               placeholder="До"
-              className="input-field text-sm"
+              className="input-field"
             />
           </div>
         </div>
