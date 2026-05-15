@@ -205,7 +205,7 @@ export default async function handler(req, res) {
       }
       if (t === 'Analytics') {
         const rows = await q(
-          `INSERT INTO "Analytics" (id, type, page, "phoneNumber", "userAgent", referrer, "createdAt") VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, NOW()) RETURNING *`,
+          `INSERT INTO "Analytics" (id, type, page, phonenumber, useragent, referrer, "createdAt") VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, NOW()) RETURNING *`,
           [values.type, values.page || null, values.phoneNumber || null, values.userAgent || null, values.referrer || null]
         );
         return res.status(201).json(rows[0]);
