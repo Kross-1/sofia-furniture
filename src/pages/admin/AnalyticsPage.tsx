@@ -18,10 +18,43 @@ type TabType = 'visitors' | 'phone-clicks' | 'change-log';
 export default function AnalyticsPage() {
   const { isDeveloper } = useAuth();
   const { analytics, clearAnalytics, refreshAnalytics } = useAnalytics();
+  const [serverData, setServerData] = useState<{ visitors: any[]; phoneClicks: any[] }>({ visitors: [], phoneClicks: [] });
 
   // Force refresh data on mount to ensure we have latest from localStorage
   useEffect(() => {
     refreshAnalytics();
+    // Also fetch from server for cross-device sync
+    const loadFromServer = async () => {
+      try {
+        const [visitsRes, clicksRes] = await Promise.all([
+          fetch('/api/db?table=Analytics&type=visit&limit=1000'),
+          fetch('/api/db?table=Analytics&type=phone-click&limit=500'),
+        ]);
+        const visits = await visitsRes.json();
+        const clicks = await clicksRes.json();
+
+        if (visits.length > 0 || clicks.length > 0) {
+          setServerData({
+            visitors: visits.map((v: any) => ({
+              id: v.id,
+              timestamp: v.createdAt,
+              page: v.page,
+              referrer: v.referrer,
+              userAgent: v.userAgent,
+            })),
+            phoneClicks: clicks.map((c: any) => ({
+              id: c.id,
+              timestamp: c.createdAt,
+              phoneNumber: c.phoneNumber,
+              page: c.page,
+            })),
+          });
+        }
+      } catch (e) {
+        console.error('Error loading analytics from server:', e);
+      }
+    };
+    loadFromServer();
   }, [refreshAnalytics]);
   const [activeTab, setActiveTab] = useState<TabType>('visitors');
   const [dateFilter, setDateFilter] = useState<'today' | 'week' | 'month' | 'all'>('week');
@@ -46,19 +79,27 @@ export default function AnalyticsPage() {
     }
   };
 
-  const filteredVisitors = filterByDate(analytics.visitors);
-  const filteredPhoneClicks = filterByDate(analytics.phoneClicks);
+  // Merge local and server data
+  const mergedVisitors = [...analytics.visitors, ...serverData.visitors.filter(
+    (sv: any) => !analytics.visitors.some(lv => lv.id === sv.id)
+  )];
+  const mergedPhoneClicks = [...analytics.phoneClicks, ...serverData.phoneClicks.filter(
+    (sc: any) => !analytics.phoneClicks.some(lc => lc.id === sc.id)
+  )];
+
+  const filteredVisitors = filterByDate(mergedVisitors);
+  const filteredPhoneClicks = filterByDate(mergedPhoneClicks);
   const filteredChangeLogs = filterByDate(analytics.changeLogs);
 
   const totalVisitors = filteredVisitors.length;
-  const uniqueVisitors = new Set(filteredVisitors.map((v) => v.userAgent)).size;
+  const uniqueVisitors = new Set(filteredVisitors.map((v: any) => v.userAgent)).size;
   const totalPhoneClicks = filteredPhoneClicks.length;
-  const phoneClicksByNumber = filteredPhoneClicks.reduce((acc, click) => {
+  const phoneClicksByNumber = filteredPhoneClicks.reduce((acc: Record<string, number>, click: any) => {
     acc[click.phoneNumber] = (acc[click.phoneNumber] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
 
-  const visitorsByPage = filteredVisitors.reduce((acc, visitor) => {
+  const visitorsByPage = filteredVisitors.reduce((acc: Record<string, number>, visitor: any) => {
     acc[visitor.page] = (acc[visitor.page] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);

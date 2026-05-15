@@ -107,6 +107,12 @@ export default async function handler(req, res) {
           }
           if (!getCached('User')) { setCached('User', rows); rows = getCached('User'); }
         }
+      } else if (table === 'Analytics') {
+        const type = req.query.type;
+        const limit = req.query.limit || 500;
+        const where = type ? `WHERE type = $1` : '';
+        const params = type ? [type] : [];
+        rows = await q(`SELECT * FROM "Analytics" ${where} ORDER BY "createdAt" DESC LIMIT ${limit}`, params);
       } else {
         return res.status(400).json({ error: `Unknown table: ${table}` });
       }
@@ -196,6 +202,13 @@ export default async function handler(req, res) {
         );
         invalidateCache('User');
         return res.status(200).json(rows[0] || {});
+      }
+      if (t === 'Analytics') {
+        const rows = await q(
+          `INSERT INTO "Analytics" (id, type, page, "phoneNumber", "userAgent", referrer, "createdAt") VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, NOW()) RETURNING *`,
+          [values.type, values.page || null, values.phoneNumber || null, values.userAgent || null, values.referrer || null]
+        );
+        return res.status(201).json(rows[0]);
       }
       if (t === 'seed_products') {
         const cats = [

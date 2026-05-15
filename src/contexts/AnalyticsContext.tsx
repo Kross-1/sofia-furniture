@@ -91,9 +91,22 @@ export function AnalyticsProvider({ children }: { children: ReactNode }) {
       userAgent: navigator.userAgent
     };
 
+    // Send to server
+    fetch('/api/db', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        table: 'Analytics',
+        type: 'visit',
+        page,
+        userAgent: navigator.userAgent,
+        referrer: document.referrer || undefined,
+      }),
+    }).catch(() => {});
+
     setAnalytics(prev => ({
       ...prev,
-      visitors: [...prev.visitors, visitor].slice(-1000) // Keep last 1000 visits
+      visitors: [...prev.visitors, visitor].slice(-1000)
     }));
   }, []);
 
@@ -106,9 +119,21 @@ export function AnalyticsProvider({ children }: { children: ReactNode }) {
       page
     };
 
+    // Send to server
+    fetch('/api/db', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        table: 'Analytics',
+        type: 'phone-click',
+        page,
+        phoneNumber,
+      }),
+    }).catch(() => {});
+
     setAnalytics(prev => ({
       ...prev,
-      phoneClicks: [...prev.phoneClicks, click].slice(-500) // Keep last 500 clicks
+      phoneClicks: [...prev.phoneClicks, click].slice(-500)
     }));
   }, []);
 
