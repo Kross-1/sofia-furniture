@@ -35,6 +35,7 @@ interface AnalyticsContextType {
   trackPhoneClick: (phoneNumber: string, page: string) => void;
   addChangeLog: (user: string, action: string, details: string) => void;
   clearAnalytics: () => void;
+  refreshAnalytics: () => void;
 }
 
 const AnalyticsContext = createContext<AnalyticsContextType | undefined>(undefined);
@@ -137,6 +138,16 @@ export function AnalyticsProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem(ANALYTICS_STORAGE_KEY);
   }, []);
 
+  // Force refresh from localStorage
+  const refreshAnalytics = useCallback(() => {
+    const stored = localStorage.getItem(ANALYTICS_STORAGE_KEY);
+    if (stored) {
+      try {
+        setAnalytics(JSON.parse(stored));
+      } catch {}
+    }
+  }, []);
+
   return (
     <AnalyticsContext.Provider
       value={{
@@ -144,7 +155,8 @@ export function AnalyticsProvider({ children }: { children: ReactNode }) {
         trackVisit,
         trackPhoneClick,
         addChangeLog,
-        clearAnalytics
+        clearAnalytics,
+        refreshAnalytics
       }}
     >
       {children}

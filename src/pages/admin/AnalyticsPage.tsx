@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useAnalytics } from '../../contexts/AnalyticsContext';
 import { useAuth } from '../../contexts/AuthContext';
 import {
@@ -17,7 +17,12 @@ type TabType = 'visitors' | 'phone-clicks' | 'change-log';
 
 export default function AnalyticsPage() {
   const { isDeveloper } = useAuth();
-  const { analytics, clearAnalytics } = useAnalytics();
+  const { analytics, clearAnalytics, refreshAnalytics } = useAnalytics();
+
+  // Force refresh data on mount to ensure we have latest from localStorage
+  useEffect(() => {
+    refreshAnalytics();
+  }, [refreshAnalytics]);
   const [activeTab, setActiveTab] = useState<TabType>('visitors');
   const [dateFilter, setDateFilter] = useState<'today' | 'week' | 'month' | 'all'>('week');
 
