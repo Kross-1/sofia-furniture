@@ -33,13 +33,17 @@ export default function SettingsPage() {
     const load = async () => {
       try {
         const settings = await getSiteSettings();
+        const nameSetting = settings.find((s: any) => s.key === 'site_name');
+        if (nameSetting) setSiteName(nameSetting.value);
+        
+        const descSetting = settings.find((s: any) => s.key === 'site_description');
+        if (descSetting) setSiteDescription(descSetting.value);
+
         const emailSetting = settings.find((s: any) => s.key === 'contact_email');
-        if (emailSetting) {
-          setContactEmail(emailSetting.value);
-        }
+        if (emailSetting) setContactEmail(emailSetting.value);
       } catch {
-        const saved = localStorage.getItem('sofia_contact_email');
-        if (saved) setContactEmail(saved);
+        const savedEmail = localStorage.getItem('sofia_contact_email');
+        if (savedEmail) setContactEmail(savedEmail);
       }
     };
     load();
@@ -53,6 +57,8 @@ export default function SettingsPage() {
       if (contactEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail)) {
         throw new Error('Некорректный формат email');
       }
+      await saveSiteSetting('site_name', siteName);
+      await saveSiteSetting('site_description', siteDescription);
       await saveSiteSetting('contact_email', contactEmail);
       localStorage.setItem('sofia_contact_email', contactEmail);
       setSaveSuccess(true);
