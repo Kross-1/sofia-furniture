@@ -25,3 +25,7 @@ dist-ssr
 
 /generated/prisma
 .vercel
+
+# Environment variables
+.env
+.env*.local
