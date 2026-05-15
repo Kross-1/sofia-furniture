@@ -1,6 +1,41 @@
 const API = '/api/db';
+const CACHE_TTL = 30000;
 
-async function fetchAPI(endpoint: string, options?: RequestInit) {
+interface CacheEntry {
+  data: any;
+  timestamp: number;
+}
+
+const cache = new Map<string, CacheEntry>();
+
+function getCached(key: string): any | null {
+  const entry = cache.get(key);
+  if (!entry) return null;
+  if (Date.now() - entry.timestamp > CACHE_TTL) {
+    cache.delete(key);
+    return null;
+  }
+  return entry.data;
+}
+
+function setCached(key: string, data: any): void {
+  cache.set(key, { data, timestamp: Date.now() });
+}
+
+function invalidateCache(table: string): void {
+  for (const key of cache.keys()) {
+    if (key.startsWith(table)) {
+      cache.delete(key);
+    }
+  }
+}
+
+async function fetchAPI(endpoint: string, options?: RequestInit, cacheKey?: string) {
+  if (!options && cacheKey) {
+    const cached = getCached(cacheKey);
+    if (cached) return cached;
+  }
+
   let res: Response;
   try {
     res = await fetch(`${API}${endpoint}`, {
@@ -23,6 +58,11 @@ async function fetchAPI(endpoint: string, options?: RequestInit) {
   if (!Array.isArray(data) && data?.error) {
     throw new Error(data.error);
   }
+
+  if (cacheKey && Array.isArray(data)) {
+    setCached(cacheKey, data);
+  }
+
   return data;
 }
 
@@ -40,8 +80,7 @@ function getCategoryId(categoryName: string): string {
 }
 
 export async function getProducts(): Promise<any[]> {
-  const products = await fetchAPI('?table=Product');
-  // map UUIDs back to numeric IDs for compatibility
+  const products = await fetchAPI('?table=Product', undefined, 'Product');
   return products.map((p: any, i: number) => ({
     ...p,
     id: p.id || i + 1,
@@ -62,67 +101,82 @@ export async function addProduct(product: any): Promise<any> {
     description: product.description || null,
   };
   const result = await fetchAPI('', { method: 'POST', body: JSON.stringify(body) });
+  invalidateCache('Product');
   return { ...result, id: result.id || Date.now(), category: product.category || '' };
 }
 
 export async function updateProductDB(id: number | string, updates: any): Promise<any> {
-  return fetchAPI('', {
+  const result = await fetchAPI('', {
     method: 'POST',
     body: JSON.stringify({ table: 'Product', id: String(id), ...updates }),
   });
+  invalidateCache('Product');
+  return result;
 }
 
 export async function deleteProductDB(id: number | string): Promise<void> {
   await fetchAPI(`?table=Product&id=${id}`, { method: 'DELETE' });
+  invalidateCache('Product');
 }
 
 export async function getMediaItems(page?: string): Promise<any[]> {
+  const key = page ? `MediaItem:${page}` : 'MediaItem';
   const params = page ? `?table=MediaItem&page=${page}` : '?table=MediaItem';
-  return fetchAPI(params);
+  return fetchAPI(params, undefined, key);
 }
 
 export async function saveMediaItem(page: string, section: string, type: string, url: string): Promise<any> {
-  return fetchAPI('', {
+  const result = await fetchAPI('', {
     method: 'POST',
     body: JSON.stringify({ table: 'MediaItem', page, section, type, url }),
   });
+  invalidateCache('MediaItem');
+  return result;
 }
 
 export async function deleteMediaItem(id: string): Promise<void> {
   await fetchAPI(`?table=MediaItem&id=${id}`, { method: 'DELETE' });
+  invalidateCache('MediaItem');
 }
 
 export async function getMessages(): Promise<any[]> {
-  return fetchAPI('?table=Message');
+  return fetchAPI('?table=Message', undefined, 'Message');
 }
 
 export async function saveMessage(name: string, phone: string, comment?: string, product?: string): Promise<any> {
-  return fetchAPI('', {
+  const result = await fetchAPI('', {
     method: 'POST',
     body: JSON.stringify({ table: 'Message', name, phone, comment, product }),
   });
+  invalidateCache('Message');
+  return result;
 }
 
 export async function updateMessageStatus(id: string, status: string): Promise<any> {
-  return fetchAPI('', {
+  const result = await fetchAPI('', {
     method: 'POST',
     body: JSON.stringify({ table: 'Message_update', id, status }),
   });
+  invalidateCache('Message');
+  return result;
 }
 
 export async function deleteMessage(id: string): Promise<void> {
   await fetchAPI(`?table=Message&id=${id}`, { method: 'DELETE' });
+  invalidateCache('Message');
 }
 
 export async function getSiteSettings(): Promise<any[]> {
-  return fetchAPI('?table=SiteSetting');
+  return fetchAPI('?table=SiteSetting', undefined, 'SiteSetting');
 }
 
 export async function saveSiteSetting(key: string, value: string): Promise<any> {
-  return fetchAPI('', {
+  const result = await fetchAPI('', {
     method: 'POST',
     body: JSON.stringify({ table: 'SiteSetting', key, value }),
   });
+  invalidateCache('SiteSetting');
+  return result;
 }
 
 export async function checkAuth(login: string, password: string): Promise<any> {
