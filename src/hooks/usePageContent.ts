@@ -1,5 +1,5 @@
-import { useState, useCallback, useMemo } from 'react';
-import { saveSiteSetting } from '../lib/db';
+import { useState, useCallback, useMemo, useEffect } from 'react';
+import { saveSiteSetting, getSiteSettings } from '../lib/db';
 
 export interface PageTextItem {
   id: string;
@@ -198,6 +198,22 @@ export function usePageContent() {
   const [icons] = useState<IconItem[]>(defaultIcons);
   const [categories] = useState<CategoryItem[]>(defaultCategories);
   const [productCategories] = useState<ProductCategoryItem[]>(defaultProductCategories);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  // Load texts from DB on mount
+  useEffect(() => {
+    getSiteSettings().then(dbSettings => {
+      if (dbSettings && dbSettings.length > 0) {
+        setTexts(prev => prev.map(t => {
+          const found = dbSettings.find((s: any) => s.key === t.id);
+          return found ? { ...t, text: found.value } : t;
+        }));
+      }
+      setIsLoaded(true);
+    }).catch(() => {
+      setIsLoaded(true);
+    });
+  }, []);
 
   const getText = useCallback((id: string): string => {
     const item = texts.find(t => t.id === id);
@@ -273,8 +289,14 @@ export function usePageContent() {
   const deleteProductCategory = useCallback((id: string) => {}, []);
   const resetProductCategoriesToDefaults = useCallback(() => {}, []);
 
-  const resetToDefaults = useCallback(() => {}, []);
-  const findDuplicateTexts = useCallback((id: string): PageTextItem[] => { return []; }, []);
+  const resetToDefaults = useCallback(() => {
+    setTexts(allDefaultTexts);
+  }, []);
+  const findDuplicateTexts = useCallback((id: string): PageTextItem[] => {
+    const target = allDefaultTexts.find(t => t.id === id);
+    if (!target) return [];
+    return allDefaultTexts.filter(t => t.id !== id && t.htmlKey === target.htmlKey);
+  }, []);
   const updateIcon = useCallback((id: string, updates: Partial<IconItem>) => {}, []);
   const addIcon = useCallback((icon: Omit<IconItem, 'id'>): IconItem => { return icon as IconItem; }, []);
   const deleteIcon = useCallback((id: string) => {}, []);
