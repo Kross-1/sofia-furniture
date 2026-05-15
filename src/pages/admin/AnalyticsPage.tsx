@@ -1,6 +1,6 @@
 ﻿import { useState, useEffect } from 'react';
-import { useAnalytics } from '../../contexts/AnalyticsContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { useAnalytics } from '../../contexts/AnalyticsContext';
 import {
   Eye,
   Phone,
@@ -11,53 +11,58 @@ import {
   Trash2,
   Download,
   BarChart3,
+  RefreshCw,
 } from 'lucide-react';
 
 type TabType = 'visitors' | 'phone-clicks' | 'change-log';
 
 export default function AnalyticsPage() {
   const { isDeveloper } = useAuth();
-  const { analytics, clearAnalytics, refreshAnalytics } = useAnalytics();
-  const [serverData, setServerData] = useState<{ visitors: any[]; phoneClicks: any[] }>({ visitors: [], phoneClicks: [] });
-
-  // Force refresh data on mount to ensure we have latest from localStorage
-  useEffect(() => {
-    refreshAnalytics();
-    // Also fetch from server for cross-device sync
-    const loadFromServer = async () => {
-      try {
-        const [visitsRes, clicksRes] = await Promise.all([
-          fetch('/api/db?table=Analytics&type=visit&limit=1000'),
-          fetch('/api/db?table=Analytics&type=phone-click&limit=500'),
-        ]);
-        const visits = await visitsRes.json();
-        const clicks = await clicksRes.json();
-
-        if (visits.length > 0 || clicks.length > 0) {
-          setServerData({
-            visitors: visits.map((v: any) => ({
-              id: v.id,
-              timestamp: v.createdAt,
-              page: v.page,
-              referrer: v.referrer,
-              userAgent: v.userAgent,
-            })),
-            phoneClicks: clicks.map((c: any) => ({
-              id: c.id,
-              timestamp: c.createdAt,
-              phoneNumber: c.phoneNumber,
-              page: c.page,
-            })),
-          });
-        }
-      } catch (e) {
-        console.error('Error loading analytics from server:', e);
-      }
-    };
-    loadFromServer();
-  }, [refreshAnalytics]);
+  const { analytics, clearAnalytics } = useAnalytics();
   const [activeTab, setActiveTab] = useState<TabType>('visitors');
   const [dateFilter, setDateFilter] = useState<'today' | 'week' | 'month' | 'all'>('week');
+  const [serverVisits, setServerVisits] = useState<any[]>([]);
+  const [serverClicks, setServerClicks] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch data directly from server on mount
+  useEffect(() => {
+    const loadServerData = async () => {
+      setIsLoading(true);
+      try {
+        const [visitsRes, clicksRes] = await Promise.all([
+          fetch('/api/db?table=Analytics&type=visit&limit=2000'),
+          fetch('/api/db?table=Analytics&type=phone-click&limit=1000'),
+        ]);
+        
+        if (visitsRes.ok) {
+          const visits = await visitsRes.json();
+          setServerVisits(visits.map((v: any) => ({
+            id: v.id,
+            timestamp: v.createdAt,
+            page: v.page || 'Unknown',
+            referrer: v.referrer,
+            userAgent: v.userAgent,
+          })));
+        }
+        
+        if (clicksRes.ok) {
+          const clicks = await clicksRes.json();
+          setServerClicks(clicks.map((c: any) => ({
+            id: c.id,
+            timestamp: c.createdAt,
+            phoneNumber: c.phoneNumber,
+            page: c.page,
+          })));
+        }
+      } catch (e) {
+        console.error('Failed to load analytics from server:', e);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadServerData();
+  }, []);
 
   const filterByDate = <T extends { timestamp: string }>(items: T[]): T[] => {
     const now = new Date();
@@ -79,16 +84,8 @@ export default function AnalyticsPage() {
     }
   };
 
-  // Merge local and server data
-  const mergedVisitors = [...analytics.visitors, ...serverData.visitors.filter(
-    (sv: any) => !analytics.visitors.some(lv => lv.id === sv.id)
-  )];
-  const mergedPhoneClicks = [...analytics.phoneClicks, ...serverData.phoneClicks.filter(
-    (sc: any) => !analytics.phoneClicks.some(lc => lc.id === sc.id)
-  )];
-
-  const filteredVisitors = filterByDate(mergedVisitors);
-  const filteredPhoneClicks = filterByDate(mergedPhoneClicks);
+  const filteredVisitors = filterByDate(serverVisits);
+  const filteredPhoneClicks = filterByDate(serverClicks);
   const filteredChangeLogs = filterByDate(analytics.changeLogs);
 
   const totalVisitors = filteredVisitors.length;
@@ -115,11 +112,34 @@ export default function AnalyticsPage() {
     });
   };
 
-  const handleClearData = () => {
+  const handleClearData = async () => {
     if (confirm('Вы уверены, что хотите удалить все данные аналитики?')) {
       if (confirm('Это действие нельзя отменить. Продолжить?')) {
-        clearAnalytics();
+        try {
+          await fetch('/api/db?table=Analytics', { method: 'DELETE' });
+          setServerVisits([]);
+          setServerClicks([]);
+          clearAnalytics();
+        } catch (e) {
+          console.error('Failed to clear analytics:', e);
+        }
       }
+    }
+  };
+
+  const handleRefresh = async () => {
+    setIsLoading(true);
+    try {
+      const [visitsRes, clicksRes] = await Promise.all([
+        fetch('/api/db?table=Analytics&type=visit&limit=2000'),
+        fetch('/api/db?table=Analytics&type=phone-click&limit=1000'),
+      ]);
+      if (visitsRes.ok) setServerVisits((await visitsRes.json()).map((v: any) => ({ ...v, timestamp: v.createdAt })));
+      if (clicksRes.ok) setServerClicks((await clicksRes.json()).map((c: any) => ({ ...c, timestamp: c.createdAt })));
+    } catch (e) {
+      console.error('Refresh failed:', e);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -162,6 +182,13 @@ export default function AnalyticsPage() {
             <option value="month">За месяц</option>
             <option value="all">Все время</option>
           </select>
+          <button
+            onClick={handleRefresh}
+            className="btn-secondary inline-flex items-center gap-2"
+          >
+            <RefreshCw className={`w-5 h-5 ${isLoading ? 'animate-spin' : ''}`} />
+            Обновить
+          </button>
           <button
             onClick={exportData}
             className="btn-secondary inline-flex items-center gap-2"

@@ -259,9 +259,17 @@ export default async function handler(req, res) {
     if (req.method === 'DELETE') {
       const t = req.query.table;
       const id = req.query.id;
-      if (!t || !id) return res.status(400).json({ error: 'Missing table or id' });
+      if (!t) return res.status(400).json({ error: 'Missing table' });
 
-      if (t === 'Message' || t === 'MediaItem' || t === 'Product' || t === 'User') {
+      if (t === 'Analytics' && !id) {
+        // Clear all analytics
+        await q(`DELETE FROM "Analytics"`);
+        return res.status(200).json({ success: true });
+      }
+
+      if (!id) return res.status(400).json({ error: 'Missing id' });
+
+      if (t === 'Message' || t === 'MediaItem' || t === 'Product' || t === 'User' || t === 'Analytics') {
         await q(`DELETE FROM "${t}" WHERE id = $1`, [id]);
         invalidateCache(t);
         return res.status(200).json({ success: true });
