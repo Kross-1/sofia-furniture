@@ -16,6 +16,7 @@ import {
   PlusCircle,
   Video,
   GripVertical,
+  AlertCircle,
 } from 'lucide-react';
 
 export default function ProductsPage() {
@@ -30,6 +31,7 @@ export default function ProductsPage() {
   const [showAddMaterial, setShowAddMaterial] = useState(false);
   const [showAddCategory, setShowAddCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
+  const [formErrors, setFormErrors] = useState<{name?: string; category?: string; price?: string}>({});
 
   // Refs for file inputs
   const mainImageInputRef = useRef<HTMLInputElement>(null);
@@ -58,6 +60,7 @@ export default function ProductsPage() {
   });
 
   const handleOpenModal = (product?: Product) => {
+    setFormErrors({});
     if (product) {
       setEditingProduct(product);
       setFormData({
@@ -95,10 +98,28 @@ export default function ProductsPage() {
     setShowAddMaterial(false);
     setShowAddCategory(false);
     setNewCategoryName('');
+    setFormErrors({});
   };
 
   const handleSave = () => {
-    if (!formData.name || !formData.category) return;
+    const errors: {name?: string; category?: string; price?: string} = {};
+
+    if (!formData.name?.trim()) {
+      errors.name = 'Введите название товара';
+    }
+    if (!formData.category) {
+      errors.category = 'Выберите категорию';
+    }
+    if (!formData.price || formData.price <= 0) {
+      errors.price = 'Укажите корректную цену';
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      return;
+    }
+
+    setFormErrors({});
 
     // Join selected materials into a string
     const materialStr = selectedMaterials.join(', ');
@@ -479,12 +500,19 @@ export default function ProductsPage() {
                 <input
                   type="text"
                   value={formData.name || ''}
-                  onChange={(e) =>
-                    setFormData({ ...formData, name: e.target.value })
-                  }
-                  className="input-field"
+                  onChange={(e) => {
+                    setFormData({ ...formData, name: e.target.value });
+                    if (formErrors.name) setFormErrors({ ...formErrors, name: undefined });
+                  }}
+                  className={`input-field ${formErrors.name ? 'border-destructive focus:ring-destructive' : ''}`}
                   placeholder="Например: Диван 'Венеция'"
                 />
+                {formErrors.name && (
+                  <p className="mt-1 text-sm text-destructive flex items-center gap-1">
+                    <AlertCircle className="w-4 h-4" />
+                    {formErrors.name}
+                  </p>
+                )}
               </div>
 
               {/* Category */}
@@ -494,10 +522,11 @@ export default function ProductsPage() {
                 </label>
                 <select
                   value={formData.category || ''}
-                  onChange={(e) =>
-                    setFormData({ ...formData, category: e.target.value })
-                  }
-                  className="input-field"
+                  onChange={(e) => {
+                    setFormData({ ...formData, category: e.target.value });
+                    if (formErrors.category) setFormErrors({ ...formErrors, category: undefined });
+                  }}
+                  className={`input-field ${formErrors.category ? 'border-destructive focus:ring-destructive' : ''}`}
                 >
                   <option value="">Выберите категорию</option>
                   {enabledCategories.map((cat) => (
@@ -506,6 +535,12 @@ export default function ProductsPage() {
                     </option>
                   ))}
                 </select>
+                {formErrors.category && (
+                  <p className="mt-1 text-sm text-destructive flex items-center gap-1">
+                    <AlertCircle className="w-4 h-4" />
+                    {formErrors.category}
+                  </p>
+                )}
                 {showAddCategory ? (
                   <div className="mt-2 flex gap-2">
                     <input
@@ -547,16 +582,24 @@ export default function ProductsPage() {
                 </label>
                 <input
                   type="number"
+                  min="0"
                   value={formData.price || ''}
-                  onChange={(e) =>
+                  onChange={(e) => {
                     setFormData({
                       ...formData,
                       price: parseInt(e.target.value) || 0,
-                    })
-                  }
-                  className="input-field"
+                    });
+                    if (formErrors.price) setFormErrors({ ...formErrors, price: undefined });
+                  }}
+                  className={`input-field ${formErrors.price ? 'border-destructive focus:ring-destructive' : ''}`}
                   placeholder="0"
                 />
+                {formErrors.price && (
+                  <p className="mt-1 text-sm text-destructive flex items-center gap-1">
+                    <AlertCircle className="w-4 h-4" />
+                    {formErrors.price}
+                  </p>
+                )}
               </div>
 
               {/* Materials - Multiple Selection */}

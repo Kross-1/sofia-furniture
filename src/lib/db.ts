@@ -1,28 +1,42 @@
 const API = '/api/db';
 
 async function fetchAPI(endpoint: string, options?: RequestInit) {
-  const res = await fetch(`${API}${endpoint}`, {
-    headers: { 'Content-Type': 'application/json' },
-    ...options,
-  });
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: res.statusText }));
-    throw new Error(err.error || 'API error');
+  let res: Response;
+  try {
+    res = await fetch(`${API}${endpoint}`, {
+      headers: { 'Content-Type': 'application/json' },
+      ...options,
+    });
+  } catch (e) {
+    throw new Error('Network error: unable to connect to server');
   }
-  return res.json();
+  if (!res.ok) {
+    let err: { error?: string } = {};
+    try {
+      err = await res.json();
+    } catch {
+      err = { error: res.statusText };
+    }
+    throw new Error(err.error || `Server error (${res.status})`);
+  }
+  const data = await res.json();
+  if (!Array.isArray(data) && data?.error) {
+    throw new Error(data.error);
+  }
+  return data;
 }
 
 function getCategoryId(categoryName: string): string {
   const map: Record<string, string> = {
-    '�᦬�-��Ț-T˦� ���-T��-��T�T�T�T�': '1b5f4171-72f7-495c-9da6-a68c2485d577',
-    '��� T�Tæ-�-T�': '980af499-5151-48e6-acbe-7ac9a0b8cdc0',
-    '�ڦ-�-T��-����': 'e10123b4-e724-4cb8-940e-52cee03a4956',
-    '��T¦-��T�': 'fd30f952-4fe5-47c7-a2db-5afac550ddef',
-    '��T�Tæ�T�T�': 'd7560113-5da3-4ad0-bc1d-92e7198c74d5',
-    '��-����T�': '5be7b0fb-3326-4ea2-be42-c37085b11cf7',
-    '�Ԧ��-�-�-T�': '4b0beeca-988c-4207-a2bf-e25e18675491',
+    'Спальные гарнитуры': '468a0859-8f3d-4bd4-80df-8084dbdde175',
+    'ТВ тумбы': '3dd8bc4c-94c1-4d7f-8587-915515741787',
+    'Консоли': 'e10123b4-e724-4cb8-940e-52cee03a4956',
+    'Столы': 'fd30f952-4fe5-47c7-a2db-5afac550ddef',
+    'Стулья': 'd7560113-5da3-4ad0-bc1d-92e7198c74d5',
+    'Холлы': '5be7b0fb-3326-4ea2-be42-c37085b11cf7',
+    'Диваны': '4b0beeca-988c-4207-a2bf-e25e18675491',
   };
-  return map[categoryName] || map['�᦬�-��Ț-T˦� ���-T��-��T�T�T�T�'];
+  return map[categoryName] || map['Спальные гарнитуры'];
 }
 
 export async function getProducts(): Promise<any[]> {

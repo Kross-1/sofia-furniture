@@ -15,6 +15,7 @@ export default function SettingsPage() {
   const [contactEmail, setContactEmail] = useState('info@sofia.ru');
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [saveError, setSaveError] = useState('');
 
   // Password change fields
   const [showPasswordForm, setShowPasswordForm] = useState(false);
@@ -44,14 +45,21 @@ export default function SettingsPage() {
 
   const handleSave = async () => {
     setIsSaving(true);
+    setSaveError('');
+    setSaveSuccess(false);
     try {
+      if (contactEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail)) {
+        throw new Error('Некорректный формат email');
+      }
       await saveSiteSetting('contact_email', contactEmail);
-    } catch {}
-    localStorage.setItem('sofia_contact_email', contactEmail);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setIsSaving(false);
-    setSaveSuccess(true);
-    setTimeout(() => setSaveSuccess(false), 3000);
+      localStorage.setItem('sofia_contact_email', contactEmail);
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
+    } catch (e: any) {
+      setSaveError(e.message || 'Не удалось сохранить');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleResetData = () => {
@@ -106,6 +114,13 @@ export default function SettingsPage() {
         <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-4 mb-6 flex items-center gap-3">
           <CheckCircle className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
           <p className="text-emerald-700 dark:text-emerald-300">Настройки сохранены!</p>
+        </div>
+      )}
+
+      {saveError && (
+        <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-4 mb-6 flex items-center gap-3">
+          <AlertCircle className="w-5 h-5 text-destructive" />
+          <p className="text-destructive">{saveError}</p>
         </div>
       )}
 
