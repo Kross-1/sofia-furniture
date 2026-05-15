@@ -15,6 +15,8 @@ export default function DashboardPage() {
 
   const [messagesCount, setMessagesCount] = useState(0);
   const [newMessagesCount, setNewMessagesCount] = useState(0);
+  const [serverPhoneClicks, setServerPhoneClicks] = useState<any[]>([]);
+  const [serverVisits, setServerVisits] = useState<any[]>([]);
 
   useEffect(() => {
     const load = async () => {
@@ -29,21 +31,31 @@ export default function DashboardPage() {
           setNewMessagesCount(messages.filter((m: any) => m.status === 'new').length);
         } catch {}
       }
+      try {
+        const [visitsRes, clicksRes] = await Promise.all([
+          fetch('/api/db?table=Analytics&type=visit&limit=2000'),
+          fetch('/api/db?table=Analytics&type=phone-click&limit=1000'),
+        ]);
+        if (visitsRes.ok) setServerVisits(await visitsRes.json());
+        if (clicksRes.ok) setServerPhoneClicks(await clicksRes.json());
+      } catch {}
     };
     load();
   }, []);
 
-  const todayVisitors = analytics.visitors.filter((v) => {
-    const visitDate = new Date(v.timestamp);
+  const todayVisitors = serverVisits.filter((v) => {
+    const visitDate = new Date(v.createdAt);
     const today = new Date();
     return visitDate.toDateString() === today.toDateString();
   }).length;
 
-  const todayPhoneClicks = analytics.phoneClicks.filter((c) => {
-    const clickDate = new Date(c.timestamp);
+  const todayPhoneClicks = serverPhoneClicks.filter((c) => {
+    const clickDate = new Date(c.createdAt);
     const today = new Date();
     return clickDate.toDateString() === today.toDateString();
   }).length;
+
+  const totalVisits = serverVisits.length;
 
   const stats = [
     {
@@ -193,7 +205,7 @@ export default function DashboardPage() {
               <BarChart3 className="w-6 h-6 text-violet-600 dark:text-violet-400" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-violet-700 dark:text-violet-300">{analytics.visitors.length}</p>
+              <p className="text-2xl font-bold text-violet-700 dark:text-violet-300">{totalVisits}</p>
               <p className="text-sm text-violet-600 dark:text-violet-400">Всего посещений</p>
             </div>
           </div>
