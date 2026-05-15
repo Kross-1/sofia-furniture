@@ -111,7 +111,7 @@ export default function AboutPage() {
               <div className="w-full" style={{ minHeight: '320px' }}>
                 <ImageBlock src={heroSrc} alt="Мебельный салон Сафия" />
               </div>
-              <div className="absolute -bottom-6 -left-6 cta-gold text-white p-6 rounded-xl shadow-xl z-10">
+              <div className="relative mt-4 md:absolute md:-bottom-6 md:-left-6 cta-gold text-white p-6 rounded-xl shadow-xl z-10 w-full md:w-auto">
                 <p className="text-3xl font-bold" data-text="about-years">
                   {getText('about-years-badge')}
                 </p>
