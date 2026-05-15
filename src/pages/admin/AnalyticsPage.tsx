@@ -24,8 +24,9 @@ export default function AnalyticsPage() {
   const [serverVisits, setServerVisits] = useState<any[]>([]);
   const [serverClicks, setServerClicks] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
-  // Fetch data directly from server on mount
+  // Fetch data directly from server on mount and every 30 seconds
   useEffect(() => {
     const loadServerData = async () => {
       setIsLoading(true);
@@ -61,9 +62,12 @@ export default function AnalyticsPage() {
         console.error('Failed to load analytics from server:', e);
       } finally {
         setIsLoading(false);
+        setLastUpdated(new Date());
       }
     };
     loadServerData();
+    const interval = setInterval(loadServerData, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   const filterByDate = <T extends { timestamp: string }>(items: T[]): T[] => {
@@ -170,9 +174,20 @@ export default function AnalyticsPage() {
   return (
     <div>
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-        <h1 className="font-serif text-2xl font-bold text-foreground">
-          Аналитика
-        </h1>
+        <div>
+          <h1 className="font-serif text-2xl font-bold text-foreground flex items-center gap-2">
+            Аналитика
+            <span className="flex items-center gap-1 text-xs font-normal text-emerald-600">
+              <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse" />
+              Live
+            </span>
+          </h1>
+          {lastUpdated && (
+            <p className="text-xs text-muted-foreground mt-1">
+              Обновлено: {lastUpdated.toLocaleTimeString('ru-RU')}
+            </p>
+          )}
+        </div>
         <div className="flex items-center gap-2">
           <select
             value={dateFilter}
