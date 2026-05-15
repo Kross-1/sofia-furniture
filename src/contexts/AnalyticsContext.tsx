@@ -67,6 +67,19 @@ export function AnalyticsProvider({ children }: { children: ReactNode }) {
     localStorage.setItem(ANALYTICS_STORAGE_KEY, JSON.stringify(analytics));
   }, [analytics]);
 
+  // Sync analytics across tabs in real-time
+  useEffect(() => {
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === ANALYTICS_STORAGE_KEY && e.newValue) {
+        try {
+          setAnalytics(JSON.parse(e.newValue));
+        } catch {}
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, []);
+
   // Track page visit
   const trackVisit = useCallback((page: string) => {
     const visitor: Visitor = {
