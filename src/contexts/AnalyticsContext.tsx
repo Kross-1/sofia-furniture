@@ -40,7 +40,7 @@ interface AnalyticsContextType {
 
 const AnalyticsContext = createContext<AnalyticsContextType | undefined>(undefined);
 
-const ANALYTICS_STORAGE_KEY = 'sofia_furniture_analytics';
+const ANALYTICS_STORAGE_KEY = 'sofia_furniture_analytics_v3_safe';
 
 export function AnalyticsProvider({ children }: { children: ReactNode }) {
   const [analytics, setAnalytics] = useState<AnalyticsData>(() => {

@@ -54,7 +54,17 @@ async function fetchAPI(endpoint: string, options?: RequestInit, cacheKey?: stri
     }
     throw new Error(err.error || `Server error (${res.status})`);
   }
-  const data = await res.json();
+  const text = await res.text();
+  let data;
+  try {
+    // Attempt to extract JSON if there's garbage at the beginning
+    const jsonStart = text.indexOf('[');
+    const jsonEnd = text.lastIndexOf(']');
+    const cleanJson = jsonStart !== -1 && jsonEnd !== -1 ? text.substring(jsonStart, jsonEnd + 1) : text;
+    data = JSON.parse(cleanJson);
+  } catch {
+    throw new Error('Invalid JSON response');
+  }
   if (!Array.isArray(data) && data?.error) {
     throw new Error(data.error);
   }
