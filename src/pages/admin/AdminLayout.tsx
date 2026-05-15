@@ -14,6 +14,7 @@ import {
   MessageSquare,
   Sun,
   Moon,
+  Share2,
 } from 'lucide-react';
 import { useState, ReactNode } from 'react';
 import MenuIcon from '../../components/MenuIcon';
@@ -33,6 +34,7 @@ const allNavItems: NavItem[] = [
   { path: '/admin/messages',  label: 'Сообщения',         icon: MessageSquare },
   { path: '/admin/content',   label: 'Контент',           icon: FileText },
   { path: '/admin/analytics', label: 'Аналитика',         icon: BarChart3 },
+  { path: '/admin/socials',  label: 'Социальные сети',   icon: Share2 },
   { path: '/admin/users',     label: 'Пользователи',      icon: Users, developerOnly: true },
   { path: '/admin/settings',  label: 'Настройки',         icon: Settings },
 ];

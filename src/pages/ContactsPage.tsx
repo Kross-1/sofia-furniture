@@ -3,6 +3,7 @@ import { Phone, MapPin, Clock, Mail } from 'lucide-react';
 import { useAnalytics } from '../contexts/AnalyticsContext';
 import { usePageContent } from '../hooks/usePageContent';
 import { getMediaItems } from '../lib/db';
+import { useSocialNetworks, SocialIcon } from '../hooks/useSocialNetworks';
 
 const STORAGE_KEY = 'sofia_media_items';
 
@@ -17,6 +18,7 @@ interface MediaItem {
 export default function ContactsPage() {
   const { trackPhoneClick } = useAnalytics();
   const { getText } = usePageContent();
+  const { networks: socialNetworks } = useSocialNetworks();
   const [media, setMedia] = useState<Record<string, MediaItem[]>>({});
 
   useEffect(() => {
@@ -174,6 +176,33 @@ export default function ContactsPage() {
             </div>
           </div>
         </div>
+
+        {socialNetworks.length > 0 && (
+          <div className="mb-12">
+            <h2
+              className="font-serif text-xl font-bold text-foreground mb-6"
+              data-text="contacts-socials-title"
+            >
+              Мы в социальных сетях
+            </h2>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+              {socialNetworks.map((network) => (
+                <a
+                  key={network.id}
+                  href={network.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-3 p-4 bg-card text-card-foreground border border-border rounded-xl shadow-sm hover:border-accent/40 hover:-translate-y-0.5 transition-all"
+                >
+                  <div className="w-10 h-10 rounded-lg bg-accent/10 border border-accent/20 flex items-center justify-center text-accent">
+                    <SocialIcon slug={network.slug} />
+                  </div>
+                  <span className="font-medium text-sm">{network.name}</span>
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
 
         {exteriorImage ? (
           <div className="rounded-2xl overflow-hidden border border-border shadow-lg">

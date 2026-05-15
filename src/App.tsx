@@ -23,6 +23,7 @@ import MessagesPage from './pages/admin/MessagesPage';
 import UsersPage from './pages/admin/UsersPage';
 import SettingsPage from './pages/admin/SettingsPage';
 import AnalyticsPage from './pages/admin/AnalyticsPage';
+import SocialNetworksPage from './pages/admin/SocialNetworksPage';
 import CategoryEditor from './pages/admin/CategoryEditor';
 
 // Protected admin route wrapper
@@ -179,6 +180,14 @@ function AppRoutes() {
         element={
           <AdminRoute>
             <AnalyticsPage />
+          </AdminRoute>
+        }
+      />
+      <Route
+        path="/admin/socials"
+        element={
+          <AdminRoute>
+            <SocialNetworksPage />
           </AdminRoute>
         }
       />

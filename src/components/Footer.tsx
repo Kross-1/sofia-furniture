@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { Phone, MapPin, Clock } from 'lucide-react';
 import { useAnalytics } from '../contexts/AnalyticsContext';
 import { usePageContent } from '../hooks/usePageContent';
+import { SocialLinks } from '../hooks/useSocialNetworks';
 
 export default function Footer() {
   const { getText } = usePageContent();
@@ -106,6 +107,7 @@ export default function Footer() {
                 </span>
               </li>
             </ul>
+            <SocialLinks className="flex items-center gap-3 mt-5" />
           </div>
 
           {/* Categories */}

@@ -113,6 +113,13 @@ export default async function handler(req, res) {
         const where = type ? `WHERE type = $1` : '';
         const params = type ? [type] : [];
         rows = await q(`SELECT * FROM "Analytics" ${where} ORDER BY "createdAt" DESC LIMIT ${limit}`, params);
+      } else if (table === 'SocialNetwork') {
+        const active = req.query.active;
+        if (active === 'true') {
+          rows = await q(`SELECT * FROM "SocialNetwork" WHERE is_active = true ORDER BY name`);
+        } else {
+          rows = await q(`SELECT * FROM "SocialNetwork" ORDER BY name`);
+        }
       } else {
         return res.status(400).json({ error: `Unknown table: ${table}` });
       }
@@ -209,6 +216,21 @@ export default async function handler(req, res) {
           [values.type, values.page || null, values.phoneNumber || null, values.userAgent || null, values.referrer || null]
         );
         return res.status(201).json(rows[0]);
+      }
+      if (t === 'SocialNetwork_update') {
+        const fields = [];
+        const params = [];
+        let idx = 1;
+        if (values.url !== undefined) { fields.push(`url = $${idx++}`); params.push(values.url); }
+        if (values.is_active !== undefined) { fields.push(`is_active = $${idx++}`); params.push(values.is_active); }
+        if (values.name !== undefined) { fields.push(`name = $${idx++}`); params.push(values.name); }
+        if (fields.length === 0) return res.status(400).json({ error: 'No fields to update' });
+        params.push(values.id);
+        const rows = await q(
+          `UPDATE "SocialNetwork" SET ${fields.join(', ')} WHERE id = $${idx} RETURNING *`,
+          params
+        );
+        return res.status(200).json(rows[0] || {});
       }
       if (t === 'seed_products') {
         const cats = [
