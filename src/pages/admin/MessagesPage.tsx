@@ -2,6 +2,7 @@
 import { MessageSquare, Phone, User, Calendar, Trash2, CheckCircle, Eye, Filter, Package } from 'lucide-react';
 import { getMessages, updateMessageStatus, deleteMessage as deleteMessageAPI } from '../../lib/db';
 import { useAuth } from '../../contexts/AuthContext';
+import { useAnalytics } from '../../contexts/AnalyticsContext';
 
 interface Message {
   id: string;
@@ -16,7 +17,8 @@ interface Message {
 }
 
 export default function MessagesPage() {
-  const { isDeveloper } = useAuth();
+  const { isDeveloper, user } = useAuth();
+  const { addChangeLog } = useAnalytics();
   const [messages, setMessages] = useState<Message[]>([]);
   const [filter, setFilter] = useState<'all' | 'new' | 'read' | 'responded'>('all');
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
@@ -74,8 +76,10 @@ export default function MessagesPage() {
   };
 
   const deleteMessage = (id: string) => {
+    const msg = messages.find(m => m.id === id);
     if (confirm('Удалить это сообщение?')) {
       deleteMessageAPI(id).catch(() => {});
+      addChangeLog(user?.email || 'Unknown', 'Удаление сообщения', `От: ${msg?.name || 'Unknown'}`);
       setMessages(prev => {
         const updated = prev.filter(msg => msg.id !== id);
         localStorage.setItem('sofia_messages', JSON.stringify(updated));

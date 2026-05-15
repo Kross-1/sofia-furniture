@@ -1,6 +1,8 @@
 ﻿import { useState, useRef } from 'react';
 import { useSiteData } from '../../contexts/SiteDataContext';
 import { usePageContent } from '../../hooks/usePageContent';
+import { useAuth } from '../../contexts/AuthContext';
+import { useAnalytics } from '../../contexts/AnalyticsContext';
 import { Product } from '../../data/products';
 import {
   Plus,
@@ -22,6 +24,8 @@ import {
 export default function ProductsPage() {
   const { products, materials, addProduct, updateProduct, deleteProduct, addMaterial } = useSiteData();
   const { categories: homepageCategories, addProductCategory, getProductCategories } = usePageContent();
+  const { user } = useAuth();
+  const { addChangeLog } = useAnalytics();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -132,10 +136,11 @@ export default function ProductsPage() {
 
     if (editingProduct) {
       updateProduct(editingProduct.id, productData);
+      addChangeLog(user?.email || 'Unknown', 'Обновление товара', `${editingProduct.name} → ${formData.name}`);
     } else {
       addProduct({
         name: formData.name || '',
-        category: (formData.category || '').trim(),
+        category: formData.category || '',
         price: formData.price || 0,
         image: formData.image || '',
         images: formData.images || [],
@@ -143,14 +148,17 @@ export default function ProductsPage() {
         material: materialStr,
         description: formData.description,
       });
+      addChangeLog(user?.email || 'Unknown', 'Создание товара', formData.name || 'Без названия');
     }
 
     handleCloseModal();
   };
 
   const handleDelete = (id: number) => {
+    const product = products.find(p => p.id === id);
     if (confirm('Вы уверены, что хотите удалить этот товар?')) {
       deleteProduct(id);
+      addChangeLog(user?.email || 'Unknown', 'Удаление товара', product?.name || `ID: ${id}`);
     }
   };
 

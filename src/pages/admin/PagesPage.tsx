@@ -1,6 +1,8 @@
 ﻿import { useState } from 'react';
 import { Save, RotateCcw, Type, AlertTriangle, Info, MapPin, Globe } from 'lucide-react';
 import { usePageContent, PageTextItem } from '../../hooks/usePageContent';
+import { useAuth } from '../../contexts/AuthContext';
+import { useAnalytics } from '../../contexts/AnalyticsContext';
 
 const pages = ['Общие', 'Главная', 'Каталог', 'О нас', 'Контакты', 'Заявка'];
 
@@ -13,6 +15,8 @@ interface DuplicateInfo {
 
 export default function PagesPage() {
   const { texts, updateText, getTextsForPage, resetToDefaults, findDuplicateTexts } = usePageContent();
+  const { user } = useAuth();
+  const { addChangeLog } = useAnalytics();
   const [selectedPage, setSelectedPage] = useState('Общие');
   const [editingItem, setEditingItem] = useState<PageTextItem | null>(null);
   const [editValue, setEditValue] = useState('');
@@ -50,6 +54,7 @@ export default function PagesPage() {
   const handleSave = () => {
     if (editingItem) {
       updateText(editingItem.id, editValue);
+      addChangeLog(user?.email || 'Unknown', 'Изменение текста', `${editingItem.label}: "${editValue.substring(0, 30)}..."`);
       setEditingItem(null);
       setEditValue('');
       setDuplicateInfo(null);

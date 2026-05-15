@@ -14,7 +14,10 @@ export default function Header() {
   const { theme, toggleTheme } = useTheme();
 
   const handlePhoneClick = (_phoneNumber: string, displayNumber: string) => {
-    trackPhoneClick(displayNumber, 'Шапка сайта');
+    // Use setTimeout to ensure tracking fires before the phone app opens
+    setTimeout(() => {
+      trackPhoneClick(displayNumber, 'Шапка сайта');
+    }, 0);
   };
 
   const phone1 = getText('header-phone-1');

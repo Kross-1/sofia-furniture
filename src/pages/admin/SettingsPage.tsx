@@ -1,12 +1,14 @@
 ﻿import { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSiteData } from '../../contexts/SiteDataContext';
+import { useAnalytics } from '../../contexts/AnalyticsContext';
 import { Save, AlertCircle, CheckCircle, Lock, Eye, EyeOff } from 'lucide-react';
 import { getSiteSettings, saveSiteSetting } from '../../lib/db';
 
 export default function SettingsPage() {
   const { user, isDeveloper, updateUser } = useAuth();
   const { resetData } = useSiteData();
+  const { addChangeLog } = useAnalytics();
 
   const [siteName, setSiteName] = useState('Мебельный салон "Сафия"');
   const [siteDescription, setSiteDescription] = useState(
@@ -66,6 +68,7 @@ export default function SettingsPage() {
     if (confirm('Вы уверены? Это удалит ВСЕ данные без возможности восстановления!')) {
       if (confirm('ПОДТВЕРДИТЕ окончательное удаление всех данных!')) {
         resetData();
+        addChangeLog(user!.email, 'Сброс данных', 'Все данные сброшены к значениям по умолчанию');
         alert('Данные сброшены к значениям по умолчанию.');
       }
     }
@@ -95,6 +98,7 @@ export default function SettingsPage() {
     }
 
     updateUser(user!.id, { password: newPassword });
+    addChangeLog(user!.email, 'Смена пароля', 'Пароль успешно изменён');
 
     setCurrentPassword('');
     setNewPassword('');

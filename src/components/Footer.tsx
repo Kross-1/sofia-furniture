@@ -8,7 +8,9 @@ export default function Footer() {
   const analytics = useAnalytics();
 
   const handlePhoneClick = (displayNumber: string) => {
-    analytics.trackPhoneClick(displayNumber, 'Подвал сайта');
+    setTimeout(() => {
+      analytics.trackPhoneClick(displayNumber, 'Подвал сайта');
+    }, 0);
   };
 
   const phone1 = getText('header-phone-1');

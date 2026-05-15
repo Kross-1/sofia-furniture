@@ -1,5 +1,6 @@
 ﻿import { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useAnalytics } from '../../contexts/AnalyticsContext';
 import {
   UserPlus,
   Pencil,
@@ -13,6 +14,7 @@ import {
 
 export default function UsersPage() {
   const { user: currentUser, isDeveloper, users, addUser, updateUser, deleteUser } = useAuth();
+  const { addChangeLog } = useAnalytics();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<typeof users[0] | null>(null);
   const [formData, setFormData] = useState({
@@ -85,6 +87,7 @@ export default function UsersPage() {
         updates.password = formData.password;
       }
       await updateUser(editingUser.id, updates);
+      addChangeLog(currentUser?.email || 'Unknown', 'Обновление пользователя', `${editingUser.email} → ${formData.email}`);
     } else {
       // Create new user
       if (!formData.password) {
@@ -100,6 +103,7 @@ export default function UsersPage() {
         password: formData.password,
         role: formData.role,
       });
+      addChangeLog(currentUser?.email || 'Unknown', 'Создание пользователя', formData.email);
     }
 
     handleCloseModal();
@@ -113,6 +117,8 @@ export default function UsersPage() {
 
     if (confirm('Вы уверены, что хотите удалить этого пользователя?')) {
       await deleteUser(id);
+      const deletedUser = users.find(u => u.id === id);
+      addChangeLog(currentUser?.email || 'Unknown', 'Удаление пользователя', deletedUser?.email || `ID: ${id}`);
     }
   };
 
@@ -122,6 +128,8 @@ export default function UsersPage() {
       return;
     }
     await updateUser(id, { role: newRole });
+    const changedUser = users.find(u => u.id === id);
+    addChangeLog(currentUser?.email || 'Unknown', 'Изменение роли', `${changedUser?.email}: ${newRole}`);
   };
 
   return (
