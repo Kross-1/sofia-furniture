@@ -97,12 +97,12 @@ export default function AnalyticsPage() {
   const totalVisitors = filteredVisitors.length;
   const uniqueVisitors = new Set(filteredVisitors.map((v: any) => v.userAgent)).size;
   const totalPhoneClicks = filteredPhoneClicks.length;
-  const phoneClicksByNumber = filteredPhoneClicks.reduce((acc: Record<string, number>, click: any) => {
+  const phoneClicksByNumber = (filteredPhoneClicks || []).reduce((acc: Record<string, number>, click: any) => {
     acc[click.phoneNumber] = (acc[click.phoneNumber] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
 
-  const visitorsByPage = filteredVisitors.reduce((acc: Record<string, number>, visitor: any) => {
+  const visitorsByPage = (filteredVisitors || []).reduce((acc: Record<string, number>, visitor: any) => {
     acc[visitor.page] = (acc[visitor.page] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);

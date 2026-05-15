@@ -43,13 +43,13 @@ export default function DashboardPage() {
     load();
   }, []);
 
-  const todayVisitors = serverVisits.filter((v) => {
+  const todayVisitors = (serverVisits || []).filter((v) => {
     const visitDate = new Date(v.createdAt);
     const today = new Date();
     return visitDate.toDateString() === today.toDateString();
   }).length;
 
-  const todayPhoneClicks = serverPhoneClicks.filter((c) => {
+  const todayPhoneClicks = (serverPhoneClicks || []).filter((c) => {
     const clickDate = new Date(c.createdAt);
     const today = new Date();
     return clickDate.toDateString() === today.toDateString();
