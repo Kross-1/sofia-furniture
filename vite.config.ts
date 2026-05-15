@@ -10,6 +10,10 @@ export default defineConfig({
     },
   },
   build: {
+    minify: 'terser',
+    terserOptions: {
+      mangle: false,
+    },
     chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
