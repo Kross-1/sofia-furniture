@@ -1,5 +1,6 @@
 ﻿import { useState } from 'react';
 import { useAnalytics } from '../../contexts/AnalyticsContext';
+import { useAuth } from '../../contexts/AuthContext';
 import {
   Eye,
   Phone,
@@ -15,6 +16,7 @@ import {
 type TabType = 'visitors' | 'phone-clicks' | 'change-log';
 
 export default function AnalyticsPage() {
+  const { isDeveloper } = useAuth();
   const { analytics, clearAnalytics } = useAnalytics();
   const [activeTab, setActiveTab] = useState<TabType>('visitors');
   const [dateFilter, setDateFilter] = useState<'today' | 'week' | 'month' | 'all'>('week');
@@ -121,12 +123,14 @@ export default function AnalyticsPage() {
             <Download className="w-5 h-5" />
             Экспорт
           </button>
-          <button
-            onClick={handleClearData}
-            className="px-4 py-2 border border-destructive/30 text-destructive rounded-lg hover:bg-destructive/10 transition-colors text-sm"
-          >
-            <Trash2 className="w-5 h-5" />
-          </button>
+          {isDeveloper && (
+            <button
+              onClick={handleClearData}
+              className="px-4 py-2 border border-destructive/30 text-destructive rounded-lg hover:bg-destructive/10 transition-colors text-sm"
+            >
+              <Trash2 className="w-5 h-5" />
+            </button>
+          )}
         </div>
       </div>
 

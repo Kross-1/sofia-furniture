@@ -1,6 +1,7 @@
 ﻿import { useState, useEffect } from 'react';
 import { MessageSquare, Phone, User, Calendar, Trash2, CheckCircle, Eye, Filter, Package } from 'lucide-react';
 import { getMessages, updateMessageStatus, deleteMessage as deleteMessageAPI } from '../../lib/db';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface Message {
   id: string;
@@ -15,6 +16,7 @@ interface Message {
 }
 
 export default function MessagesPage() {
+  const { isDeveloper } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [filter, setFilter] = useState<'all' | 'new' | 'read' | 'responded'>('all');
   const [selectedMessage, setSelectedMessage] = useState<Message | null>(null);
@@ -241,16 +243,18 @@ export default function MessagesPage() {
                         <CheckCircle className="w-5 h-5" />
                       </button>
                     )}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        deleteMessage(msg.id);
-                      }}
-                      className="p-2 text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
-                      title="Удалить"
-                    >
-                      <Trash2 className="w-5 h-5" />
-                    </button>
+                    {isDeveloper && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteMessage(msg.id);
+                        }}
+                        className="p-2 text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
+                        title="Удалить"
+                      >
+                        <Trash2 className="w-5 h-5" />
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -322,16 +326,18 @@ export default function MessagesPage() {
             </div>
 
             <div className="p-4 border-t border-border flex justify-between">
-              <button
-                onClick={() => {
-                  deleteMessage(selectedMessage.id);
-                  setSelectedMessage(null);
-                }}
-                className="flex items-center gap-2 px-4 py-2 text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
-              >
-                <Trash2 className="w-4 h-4" />
-                Удалить
-              </button>
+              {isDeveloper && (
+                <button
+                  onClick={() => {
+                    deleteMessage(selectedMessage.id);
+                    setSelectedMessage(null);
+                  }}
+                  className="flex items-center gap-2 px-4 py-2 text-destructive hover:bg-destructive/10 rounded-lg transition-colors"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Удалить
+                </button>
+              )}
               {selectedMessage.status !== 'responded' && (
                 <button
                   onClick={() => {
