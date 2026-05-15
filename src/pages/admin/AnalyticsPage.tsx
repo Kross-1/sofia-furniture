@@ -308,8 +308,8 @@ export default function AnalyticsPage() {
                   <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
                     {Object.entries(visitorsByPage).map(([page, count]) => (
                       <div key={page} className="bg-card text-card-foreground border border-border rounded-lg p-3 text-center">
-                        <p className="text-lg font-bold">{count}</p>
-                        <p className="text-xs text-muted-foreground">{page}</p>
+                        <p className="text-lg font-bold">{String(count)}</p>
+                        <p className="text-xs text-muted-foreground">{String(page)}</p>
                       </div>
                     ))}
                   </div>
@@ -384,7 +384,7 @@ export default function AnalyticsPage() {
                           <Phone className="w-4 h-4 text-accent" />
                           <span className="font-medium">{phone}</span>
                         </div>
-                        <span className="text-xl font-bold text-accent">{count}</span>
+                        <span className="text-xl font-bold text-accent">{String(count)}</span>
                       </div>
                     ))}
                   </div>
