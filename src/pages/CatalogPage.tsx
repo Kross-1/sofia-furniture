@@ -15,7 +15,7 @@ export default function CatalogPage() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedMaterials, setSelectedMaterials] = useState<string[]>([]);
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 500000]);
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 3000000]);
   // Filter visibility — default: open on desktop, closed on mobile
   const [isFilterOpen, setIsFilterOpen] = useState<boolean>(() =>
     typeof window === 'undefined' ? true : window.innerWidth >= 1024
@@ -105,7 +105,7 @@ export default function CatalogPage() {
   const handleReset = () => {
     setSelectedCategories([]);
     setSelectedMaterials([]);
-    setPriceRange([0, maxPrice]);
+    setPriceRange([0, 3000000]);
     setSearchParams({});
   };
 
