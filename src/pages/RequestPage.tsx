@@ -339,6 +339,11 @@ export default function RequestPage() {
                       Материал: {selectedProduct.material}
                     </p>
                   )}
+                  {selectedProduct.description && (
+                    <p className="text-sm text-muted-foreground mb-3 line-clamp-3">
+                      {selectedProduct.description}
+                    </p>
+                  )}
                   <div className="text-2xl font-bold text-accent mt-auto">
                     {formatPrice(selectedProduct.price)}
                   </div>
