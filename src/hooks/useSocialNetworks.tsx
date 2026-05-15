@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { Send, MessageCircle, Youtube, Instagram, Globe } from 'lucide-react';
 
 export interface SocialNetwork {
   id: string;
@@ -8,14 +7,6 @@ export interface SocialNetwork {
   url: string;
   is_active: boolean;
 }
-
-const icons: Record<string, React.ElementType> = {
-  telegram: Send,
-  whatsapp: MessageCircle,
-  vk: Globe,
-  instagram: Instagram,
-  youtube: Youtube,
-};
 
 export function useSocialNetworks() {
   const [networks, setNetworks] = useState<SocialNetwork[]>([]);
@@ -42,8 +33,7 @@ export function useSocialNetworks() {
 }
 
 export function SocialIcon({ slug, className = 'w-5 h-5' }: { slug: string; className?: string }) {
-  const Icon = icons[slug] || Globe;
-  return <Icon className={className} />;
+  return <img src={`/icons/social/${slug}.svg`} alt={slug} className={className} />;
 }
 
 export function SocialLinks({ className = 'flex items-center gap-2' }: { className?: string }) {
@@ -59,10 +49,10 @@ export function SocialLinks({ className = 'flex items-center gap-2' }: { classNa
           href={network.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-foreground/60 hover:text-accent transition-colors"
+          className="hover:scale-110 transition-transform"
           aria-label={network.name}
         >
-          <SocialIcon slug={network.slug} />
+          <SocialIcon slug={network.slug} className="w-8 h-8" />
         </a>
       ))}
     </div>
