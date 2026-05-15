@@ -102,7 +102,9 @@ export function AnalyticsProvider({ children }: { children: ReactNode }) {
         userAgent: navigator.userAgent,
         referrer: document.referrer || undefined,
       }),
-    }).catch(() => {});
+    })
+      .then(() => console.log('[Analytics] Visit sent:', page))
+      .catch((e) => console.error('[Analytics] Visit send error:', e));
 
     setAnalytics(prev => ({
       ...prev,

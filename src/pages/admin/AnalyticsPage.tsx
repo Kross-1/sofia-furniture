@@ -37,6 +37,7 @@ export default function AnalyticsPage() {
         
         if (visitsRes.ok) {
           const visits = await visitsRes.json();
+          console.log('[Analytics] Received visits:', visits);
           setServerVisits(visits.map((v: any) => ({
             id: v.id,
             timestamp: v.createdAt,
@@ -48,6 +49,7 @@ export default function AnalyticsPage() {
         
         if (clicksRes.ok) {
           const clicks = await clicksRes.json();
+          console.log('[Analytics] Received clicks:', clicks);
           setServerClicks(clicks.map((c: any) => ({
             id: c.id,
             timestamp: c.createdAt,
