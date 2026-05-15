@@ -38,6 +38,12 @@ export function SiteDataProvider({ children }: { children: ReactNode }) {
   const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
+    const CACHE_VERSION = 'v2';
+    if (localStorage.getItem('sofia_cache_version') !== CACHE_VERSION) {
+      localStorage.clear();
+      localStorage.setItem('sofia_cache_version', CACHE_VERSION);
+    }
+
     async function loadData() {
       try {
         setIsLoading(true);
