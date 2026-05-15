@@ -60,14 +60,9 @@ export default function UsersPage() {
     setError('');
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!formData.email) {
-      setError('Заполните email');
-      return;
-    }
-
-    if (!formData.email.includes('@')) {
-      setError('Введите корректный email');
+      setError('Заполните имя пользователя');
       return;
     }
 
@@ -76,7 +71,7 @@ export default function UsersPage() {
       u => u.email === formData.email && u.id !== editingUser?.id
     );
     if (duplicateEmail) {
-      setError('Пользователь с таким email уже существует');
+      setError('Пользователь с таким именем уже существует');
       return;
     }
 
@@ -89,14 +84,18 @@ export default function UsersPage() {
       if (formData.password) {
         updates.password = formData.password;
       }
-      updateUser(editingUser.id, updates);
+      await updateUser(editingUser.id, updates);
     } else {
       // Create new user
       if (!formData.password) {
         setError('Введите пароль');
         return;
       }
-      addUser({
+      if (formData.password.length < 4) {
+        setError('Пароль должен быть не менее 4 символов');
+        return;
+      }
+      await addUser({
         email: formData.email,
         password: formData.password,
         role: formData.role,
@@ -106,23 +105,23 @@ export default function UsersPage() {
     handleCloseModal();
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (id === currentUser?.id) {
       setError('Нельзя удалить самого себя');
       return;
     }
 
     if (confirm('Вы уверены, что хотите удалить этого пользователя?')) {
-      deleteUser(id);
+      await deleteUser(id);
     }
   };
 
-  const handleRoleChange = (id: string, newRole: 'developer' | 'admin') => {
+  const handleRoleChange = async (id: string, newRole: 'developer' | 'admin') => {
     if (id === currentUser?.id && newRole !== 'developer') {
       setError('Нельзя изменить свою роль');
       return;
     }
-    updateUser(id, { role: newRole });
+    await updateUser(id, { role: newRole });
   };
 
   return (
@@ -160,7 +159,7 @@ export default function UsersPage() {
             <thead className="bg-muted border-b">
               <tr>
                 <th className="text-left px-6 py-4 font-medium text-muted-foreground">
-                  Email
+                  Имя
                 </th>
                 <th className="text-left px-6 py-4 font-medium text-muted-foreground">
                   Роль
@@ -265,17 +264,17 @@ export default function UsersPage() {
             </div>
 
             <div className="p-6 space-y-4">
-              {/* Email */}
+              {/* Email / Login */}
               <div>
-                <label className="block text-sm font-medium mb-2">Email *</label>
+                <label className="block text-sm font-medium mb-2">Имя пользователя *</label>
                 <input
-                  type="email"
+                  type="text"
                   value={formData.email}
                   onChange={(e) =>
                     setFormData({ ...formData, email: e.target.value })
                   }
                   className="input-field"
-                  placeholder="email@example.com"
+                  placeholder="Введите имя"
                 />
               </div>
 

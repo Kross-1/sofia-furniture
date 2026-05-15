@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { getUsers, addUserDB, updateUserDB, deleteUserDB, checkAuth } from '../lib/db';
 
 interface AdminUser {
   id: string;
@@ -15,97 +16,80 @@ interface AuthContextType {
   logout: () => void;
   isDeveloper: boolean;
   users: AdminUser[];
-  addUser: (user: Omit<AdminUser, 'id' | 'created_at'>) => void;
-  updateUser: (id: string, updates: Partial<AdminUser>) => void;
-  deleteUser: (id: string) => void;
+  addUser: (user: Omit<AdminUser, 'id' | 'created_at'>) => Promise<void>;
+  updateUser: (id: string, updates: Partial<AdminUser>) => Promise<void>;
+  deleteUser: (id: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const STORAGE_KEY = 'sofia_admin_users';
 const SESSION_KEY = 'sofia_admin_session';
 
-// Default users
-const defaultUsers: AdminUser[] = [
-  {
-    id: '1',
-    email: 'Kross',
-    password: 'Maga28102004',
-    role: 'developer',
-    created_at: '2024-01-01'
-  },
-  {
-    id: '2',
-    email: 'admin@sofia.ru',
-    password: 'admin123',
-    role: 'admin',
-    created_at: '2024-01-15'
-  },
-];
-
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [users, setUsers] = useState<AdminUser[]>(() => {
-    // Load users from localStorage or use defaults
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      try {
-        const parsed = JSON.parse(stored);
-        if (parsed && Array.isArray(parsed) && parsed.length > 0) {
-          return parsed;
-        }
-      } catch {
-        // ignore
-      }
-    }
-    // Save defaults to localStorage on first load
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultUsers));
-    return defaultUsers;
-  });
-
+  const [users, setUsers] = useState<AdminUser[]>([]);
   const [user, setUser] = useState<AdminUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Save users to localStorage whenever they change
+  // Load users from DB on mount
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(users));
-  }, [users]);
-
-  useEffect(() => {
-    // Check for stored session
-    const storedSession = localStorage.getItem(SESSION_KEY);
-    if (storedSession) {
+    const loadUsers = async () => {
       try {
-        const session = JSON.parse(storedSession);
-        // Verify user still exists
-        const foundUser = users.find(u => u.id === session.id);
-        if (foundUser) {
-          setUser(foundUser);
-        } else {
-          localStorage.removeItem(SESSION_KEY);
+        const dbUsers = await getUsers();
+        const mapped: AdminUser[] = dbUsers.map((u: any) => ({
+          id: u.id,
+          email: u.login,
+          password: u.password,
+          role: u.role as 'developer' | 'admin',
+          created_at: u.createdAt ? new Date(u.createdAt).toISOString().split('T')[0] : '',
+        }));
+        setUsers(mapped);
+
+        // Check for stored session
+        const storedSession = localStorage.getItem(SESSION_KEY);
+        if (storedSession) {
+          try {
+            const session = JSON.parse(storedSession);
+            const foundUser = mapped.find(u => u.id === session.id);
+            if (foundUser) {
+              setUser(foundUser);
+            } else {
+              localStorage.removeItem(SESSION_KEY);
+            }
+          } catch {
+            localStorage.removeItem(SESSION_KEY);
+          }
         }
-      } catch {
-        localStorage.removeItem(SESSION_KEY);
+      } catch (e) {
+        console.error('Error loading users:', e);
+      } finally {
+        setIsLoading(false);
       }
-    }
-    setIsLoading(false);
-  }, [users]);
+    };
+    loadUsers();
+  }, []);
 
   const login = async (loginInput: string, password: string): Promise<boolean> => {
-    // Check against stored users (match by email/login field)
-    const foundUser = users.find(
-      (u) => (u.email === loginInput || u.email.toLowerCase() === loginInput.toLowerCase()) && u.password === password
-    );
-
-    if (foundUser) {
-      setUser(foundUser);
-      localStorage.setItem(SESSION_KEY, JSON.stringify({
-        id: foundUser.id,
-        email: foundUser.email,
-        role: foundUser.role
-      }));
-      return true;
+    try {
+      const result = await checkAuth(loginInput, password);
+      if (result && result.length > 0) {
+        const foundUser: AdminUser = {
+          id: result[0].id,
+          email: result[0].login,
+          password: result[0].password,
+          role: result[0].role as 'developer' | 'admin',
+          created_at: result[0].createdAt ? new Date(result[0].createdAt).toISOString().split('T')[0] : '',
+        };
+        setUser(foundUser);
+        localStorage.setItem(SESSION_KEY, JSON.stringify({
+          id: foundUser.id,
+          email: foundUser.email,
+          role: foundUser.role
+        }));
+        return true;
+      }
+    } catch (e) {
+      console.error('Login error:', e);
     }
-
     return false;
   };
 
@@ -114,31 +98,62 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem(SESSION_KEY);
   };
 
-  const addUser = (newUserData: Omit<AdminUser, 'id' | 'created_at'>) => {
-    const newUser: AdminUser = {
-      ...newUserData,
-      id: String(Date.now()),
-      created_at: new Date().toISOString().split('T')[0],
-    };
-    setUsers(prev => [...prev, newUser]);
+  const addUser = async (newUserData: Omit<AdminUser, 'id' | 'created_at'>) => {
+    try {
+      const result = await addUserDB(newUserData.email, newUserData.password, newUserData.role);
+      const newUser: AdminUser = {
+        id: result.id,
+        email: result.login,
+        password: result.password,
+        role: result.role as 'developer' | 'admin',
+        created_at: result.createdAt ? new Date(result.createdAt).toISOString().split('T')[0] : '',
+      };
+      setUsers(prev => [...prev, newUser]);
+    } catch (e) {
+      console.error('Error adding user:', e);
+    }
   };
 
-  const updateUser = (id: string, updates: Partial<AdminUser>) => {
-    setUsers(prev => prev.map(u => {
-      if (u.id === id) {
-        const updated = { ...u, ...updates };
-        // Update current user session if editing self
-        if (user?.id === id && updates.password) {
-          setUser(updated);
+  const updateUser = async (id: string, updates: Partial<AdminUser>) => {
+    try {
+      const dbUpdates: { login?: string; password?: string; role?: string } = {};
+      if (updates.email) dbUpdates.login = updates.email;
+      if (updates.password) dbUpdates.password = updates.password;
+      if (updates.role) dbUpdates.role = updates.role;
+
+      const result = await updateUserDB(id, dbUpdates);
+      setUsers(prev => prev.map(u => {
+        if (u.id === id) {
+          const updated = {
+            ...u,
+            ...(updates.email ? { email: updates.email } : {}),
+            ...(updates.password ? { password: updates.password } : {}),
+            ...(updates.role ? { role: updates.role } : {}),
+          };
+          if (user?.id === id) {
+            setUser(updated);
+            localStorage.setItem(SESSION_KEY, JSON.stringify({
+              id: updated.id,
+              email: updated.email,
+              role: updated.role
+            }));
+          }
+          return updated;
         }
-        return updated;
-      }
-      return u;
-    }));
+        return u;
+      }));
+    } catch (e) {
+      console.error('Error updating user:', e);
+    }
   };
 
-  const deleteUser = (id: string) => {
-    setUsers(prev => prev.filter(u => u.id !== id));
+  const deleteUser = async (id: string) => {
+    try {
+      await deleteUserDB(id);
+      setUsers(prev => prev.filter(u => u.id !== id));
+    } catch (e) {
+      console.error('Error deleting user:', e);
+    }
   };
 
   return (
@@ -162,7 +177,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export function useAuth() {
   const context = useContext(AuthContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;

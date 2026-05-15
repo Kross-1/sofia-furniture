@@ -92,8 +92,21 @@ export default async function handler(req, res) {
         rows = getCached('Product') || await q(`SELECT p.*, c.name as category, c.icon FROM "Product" p LEFT JOIN "Category" c ON p."categoryId" = c.id ORDER BY c."sortOrder", p.name`);
         if (!getCached('Product')) { setCached('Product', rows); rows = getCached('Product'); }
       } else if (table === 'User') {
-        rows = getCached('User') || await q(`SELECT * FROM "User"`);
-        if (!getCached('User')) { setCached('User', rows); rows = getCached('User'); }
+        const login = req.query.login;
+        const password = req.query.password;
+        if (login && password) {
+          // Auth check
+          rows = await q(`SELECT * FROM "User" WHERE login = $1 AND password = $2`, [login, password]);
+        } else {
+          // Get all users (for admin panel)
+          rows = getCached('User') || await q(`SELECT * FROM "User"`);
+          // Seed default user if empty
+          if (rows.length === 0) {
+            await q(`INSERT INTO "User" (id, login, password, role, "createdAt") VALUES (gen_random_uuid(), 'Kross', 'Maga28102004', 'developer', NOW())`);
+            rows = await q(`SELECT * FROM "User"`);
+          }
+          if (!getCached('User')) { setCached('User', rows); rows = getCached('User'); }
+        }
       } else {
         return res.status(400).json({ error: `Unknown table: ${table}` });
       }
@@ -160,6 +173,30 @@ export default async function handler(req, res) {
           return res.status(201).json(rows[0]);
         }
       }
+      if (t === 'User') {
+        const rows = await q(
+          `INSERT INTO "User" (id, login, password, role, "createdAt") VALUES (gen_random_uuid(), $1, $2, $3, NOW()) RETURNING *`,
+          [values.login || values.email, values.password, values.role || 'admin']
+        );
+        invalidateCache('User');
+        return res.status(201).json(rows[0]);
+      }
+      if (t === 'User_update') {
+        const fields = [];
+        const params = [];
+        let idx = 1;
+        if (values.password) { fields.push(`password = $${idx++}`); params.push(values.password); }
+        if (values.role) { fields.push(`role = $${idx++}`); params.push(values.role); }
+        if (values.login || values.email) { fields.push(`login = $${idx++}`); params.push(values.login || values.email); }
+        if (fields.length === 0) return res.status(400).json({ error: 'No fields to update' });
+        params.push(values.id);
+        const rows = await q(
+          `UPDATE "User" SET ${fields.join(', ')} WHERE id = $${idx} RETURNING *`,
+          params
+        );
+        invalidateCache('User');
+        return res.status(200).json(rows[0] || {});
+      }
       if (t === 'seed_products') {
         const cats = [
           ['Спальные гарнитуры', 'Bed', 1],
@@ -211,7 +248,7 @@ export default async function handler(req, res) {
       const id = req.query.id;
       if (!t || !id) return res.status(400).json({ error: 'Missing table or id' });
 
-      if (t === 'Message' || t === 'MediaItem' || t === 'Product') {
+      if (t === 'Message' || t === 'MediaItem' || t === 'Product' || t === 'User') {
         await q(`DELETE FROM "${t}" WHERE id = $1`, [id]);
         invalidateCache(t);
         return res.status(200).json({ success: true });

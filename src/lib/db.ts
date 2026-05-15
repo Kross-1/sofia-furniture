@@ -182,3 +182,30 @@ export async function saveSiteSetting(key: string, value: string): Promise<any> 
 export async function checkAuth(login: string, password: string): Promise<any> {
   return fetchAPI(`?table=User&login=${login}&password=${password}`);
 }
+
+export async function getUsers(): Promise<any[]> {
+  return fetchAPI('?table=User', undefined, 'User');
+}
+
+export async function addUserDB(login: string, password: string, role: string): Promise<any> {
+  const result = await fetchAPI('', {
+    method: 'POST',
+    body: JSON.stringify({ table: 'User', login, password, role }),
+  });
+  invalidateCache('User');
+  return result;
+}
+
+export async function updateUserDB(id: string, updates: { login?: string; password?: string; role?: string }): Promise<any> {
+  const result = await fetchAPI('', {
+    method: 'POST',
+    body: JSON.stringify({ table: 'User_update', id, ...updates }),
+  });
+  invalidateCache('User');
+  return result;
+}
+
+export async function deleteUserDB(id: string): Promise<void> {
+  await fetchAPI(`?table=User&id=${id}`, { method: 'DELETE' });
+  invalidateCache('User');
+}
