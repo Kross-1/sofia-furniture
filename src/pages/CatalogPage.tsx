@@ -87,11 +87,7 @@ export default function CatalogPage() {
   }, [products, materials]);
 
   // Calculate price range from products
-  const maxPrice = useMemo(() => {
-    if (products.length === 0) return 500000;
-    const max = Math.max(...products.map(p => p.price));
-    return Math.ceil(max / 1000) * 1000;
-  }, [products]);
+  const maxPrice = 3000000;
 
   const handleCategoryChange = (cats: string[]) => {
     setSelectedCategories(cats);
