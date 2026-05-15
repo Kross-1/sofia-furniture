@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { SiteDataProvider } from './contexts/SiteDataContext';
 import { AnalyticsProvider, useAnalytics } from './contexts/AnalyticsContext';
 import { ThemeProvider } from './contexts/ThemeContext';
+import { Metrika } from './components/Metrika';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import HomePage from './pages/HomePage';
@@ -71,6 +72,7 @@ function PageTracker() {
 function AppRoutes() {
   return (
     <>
+      <Metrika />
       <PageTracker />
       <Routes>
       {/* Public routes */}
