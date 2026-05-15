@@ -139,8 +139,8 @@ export default async function handler(req, res) {
       }
       if (t === 'Product') {
         let categoryId = values.categoryId;
-        if (!categoryId && values.category) {
-          const catRows = await q(`SELECT id FROM "Category" WHERE name = $1`, [values.category]);
+        if (values.category) {
+          const catRows = await q(`SELECT id FROM "Category" WHERE TRIM(name) = TRIM($1)`, [values.category]);
           if (catRows[0]) categoryId = catRows[0].id;
         }
 

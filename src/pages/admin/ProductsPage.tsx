@@ -2,7 +2,6 @@
 import { useSiteData } from '../../contexts/SiteDataContext';
 import { usePageContent } from '../../hooks/usePageContent';
 import { Product } from '../../data/products';
-import { getCategoryId } from '../../lib/db';
 import {
   Plus,
   Pencil,
@@ -125,12 +124,9 @@ export default function ProductsPage() {
     // Join selected materials into a string
     const materialStr = selectedMaterials.join(', ');
 
-    // Resolve categoryId from category name
-    const resolvedCategoryId = getCategoryId(formData.category || '');
-
     const productData = {
       ...formData,
-      categoryId: resolvedCategoryId,
+      category: (formData.category || '').trim(),
       material: materialStr,
     };
 
@@ -139,8 +135,7 @@ export default function ProductsPage() {
     } else {
       addProduct({
         name: formData.name || '',
-        category: formData.category || '',
-        categoryId: resolvedCategoryId,
+        category: (formData.category || '').trim(),
         price: formData.price || 0,
         image: formData.image || '',
         images: formData.images || [],
