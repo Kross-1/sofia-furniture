@@ -120,6 +120,13 @@ export default async function handler(req, res) {
         } else {
           rows = await q(`SELECT * FROM "SocialNetwork" ORDER BY name`);
         }
+      } else if (table === 'PageSEO') {
+        const path = req.query.path;
+        if (path) {
+          rows = await q(`SELECT * FROM "PageSEO" WHERE url_path = $1`, [path]);
+        } else {
+          rows = await q(`SELECT * FROM "PageSEO" ORDER BY url_path`);
+        }
       } else {
         return res.status(400).json({ error: `Unknown table: ${table}` });
       }
@@ -231,6 +238,18 @@ export default async function handler(req, res) {
           params
         );
         return res.status(200).json(rows[0] || {});
+      }
+      if (t === 'PageSEO_update') {
+        const { id, url_path, title, meta_description, h1_header, is_indexed } = values;
+        const rows = await q(
+          `INSERT INTO "PageSEO" (id, url_path, title, meta_description, h1_header, is_indexed) 
+           VALUES (COALESCE($1, gen_random_uuid()), $2, $3, $4, $5, $6) 
+           ON CONFLICT (url_path) DO UPDATE SET 
+           title = $3, meta_description = $4, h1_header = $5, is_indexed = $6 
+           RETURNING *`,
+          [id || null, url_path, title, meta_description, h1_header, is_indexed]
+        );
+        return res.status(200).json(rows[0]);
       }
       if (t === 'seed_products') {
         const cats = [

@@ -1,5 +1,7 @@
 import { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { HelmetProvider } from 'react-helmet-async';
+import { SEOManager } from './components/SEOManager';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { SiteDataProvider } from './contexts/SiteDataContext';
 import { AnalyticsProvider, useAnalytics } from './contexts/AnalyticsContext';
@@ -25,6 +27,7 @@ import UsersPage from './pages/admin/UsersPage';
 import SettingsPage from './pages/admin/SettingsPage';
 import AnalyticsPage from './pages/admin/AnalyticsPage';
 import SocialNetworksPage from './pages/admin/SocialNetworksPage';
+import SEOPage from './pages/admin/SEOPage';
 import CategoryEditor from './pages/admin/CategoryEditor';
 
 // Protected admin route wrapper
@@ -190,6 +193,14 @@ function AppRoutes() {
         element={
           <AdminRoute>
             <SocialNetworksPage />
+          </AdminRoute>
+        }
+      />
+      <Route
+        path="/admin/seo"
+        element={
+          <AdminRoute>
+            <SEOPage />
           </AdminRoute>
         }
       />
