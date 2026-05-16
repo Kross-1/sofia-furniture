@@ -50,9 +50,6 @@ export default function AboutPage() {
   const { getText, isLoaded } = usePageContent();
   const [media, setMedia] = useState<Record<string, MediaItem[]>>({});
 
-  if (!isLoaded) return <div className="min-h-screen flex items-center justify-center bg-background text-foreground">Загрузка...</div>;
-
-
   useEffect(() => {
     const load = async () => {
       try {
@@ -72,6 +69,9 @@ export default function AboutPage() {
     const interval = setInterval(load, 2000);
     return () => clearInterval(interval);
   }, []);
+
+  if (!isLoaded) return <div className="min-h-screen flex items-center justify-center bg-background text-foreground">Загрузка...</div>;
+
 
   const aboutItems = media['about'] || [];
   const getMedia = (key: string) => {

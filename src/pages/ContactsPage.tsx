@@ -21,9 +21,6 @@ export default function ContactsPage() {
   const { networks: socialNetworks } = useSocialNetworks();
   const [media, setMedia] = useState<Record<string, MediaItem[]>>({});
 
-  if (!isLoaded) return <div className="min-h-screen flex items-center justify-center bg-background text-foreground">Загрузка...</div>;
-
-
   useEffect(() => {
     const load = async () => {
       const items = await getMediaItems('contacts');
@@ -39,6 +36,9 @@ export default function ContactsPage() {
     const interval = setInterval(load, 2000);
     return () => clearInterval(interval);
   }, []);
+
+  if (!isLoaded) return <div className="min-h-screen flex items-center justify-center bg-background text-foreground">Загрузка...</div>;
+
 
   const getMedia = (key: string) => {
     const items = media['contacts'] || [];

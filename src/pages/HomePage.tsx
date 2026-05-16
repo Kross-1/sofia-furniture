@@ -47,9 +47,6 @@ export default function HomePage() {
   const { getText, getIcon, getCategories, isLoaded } = usePageContent();
   const [media, setMedia] = useState<Record<string, MediaItem[]>>({});
 
-  if (!isLoaded) return <div className="min-h-screen flex items-center justify-center bg-background text-foreground">Загрузка...</div>;
-
-
   useEffect(() => {
     const load = async () => {
       const items = await getMediaItems('home');
@@ -65,6 +62,9 @@ export default function HomePage() {
     const interval = setInterval(load, 2000);
     return () => clearInterval(interval);
   }, []);
+
+  if (!isLoaded) return <div className="min-h-screen flex items-center justify-center bg-background text-foreground">Загрузка...</div>;
+
 
   const getMedia = (key: string) => {
     const items = media['home'] || [];
