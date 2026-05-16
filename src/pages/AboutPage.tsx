@@ -47,8 +47,11 @@ function ImageBlock({ src, alt }: { src: string; alt: string }) {
 }
 
 export default function AboutPage() {
-  const { getText } = usePageContent();
+  const { getText, isLoaded } = usePageContent();
   const [media, setMedia] = useState<Record<string, MediaItem[]>>({});
+
+  if (!isLoaded) return <div className="min-h-screen flex items-center justify-center bg-background text-foreground">Загрузка...</div>;
+
 
   useEffect(() => {
     const load = async () => {

@@ -17,9 +17,12 @@ interface MediaItem {
 
 export default function ContactsPage() {
   const { trackPhoneClick } = useAnalytics();
-  const { getText } = usePageContent();
+  const { getText, isLoaded } = usePageContent();
   const { networks: socialNetworks } = useSocialNetworks();
   const [media, setMedia] = useState<Record<string, MediaItem[]>>({});
+
+  if (!isLoaded) return <div className="min-h-screen flex items-center justify-center bg-background text-foreground">Загрузка...</div>;
+
 
   useEffect(() => {
     const load = async () => {

@@ -22,10 +22,14 @@ import {
 } from 'lucide-react';
 
 export default function ProductsPage() {
-  const { products, materials, addProduct, updateProduct, deleteProduct, addMaterial } = useSiteData();
+  const { products, materials, addProduct, updateProduct, deleteProduct, addMaterial, isLoading } = useSiteData();
   const { categories: homepageCategories, addProductCategory, getProductCategories } = usePageContent();
   const { user } = useAuth();
   const { addChangeLog } = useAnalytics();
+  
+  if (isLoading) {
+    return <div className="text-center py-20 text-muted-foreground">Загрузка товаров...</div>;
+  }
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);

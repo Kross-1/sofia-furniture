@@ -307,6 +307,7 @@ export function usePageContent() {
   const unlinkProductCategoryFromHomepage = useCallback((homepageCategoryId: string) => {}, []);
 
   return {
+    isLoaded,
     texts,
     getText,
     getTextsForPage,

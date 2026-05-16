@@ -44,8 +44,11 @@ function VideoBackground({ src }: { src: string }) {
 }
 
 export default function HomePage() {
-  const { getText, getIcon, getCategories } = usePageContent();
+  const { getText, getIcon, getCategories, isLoaded } = usePageContent();
   const [media, setMedia] = useState<Record<string, MediaItem[]>>({});
+
+  if (!isLoaded) return <div className="min-h-screen flex items-center justify-center bg-background text-foreground">Загрузка...</div>;
+
 
   useEffect(() => {
     const load = async () => {
