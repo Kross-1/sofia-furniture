@@ -64,7 +64,7 @@ export default function SEOPage() {
           <div key={page.id} className="bg-card border border-border rounded-xl p-6 shadow-sm">
             <h3 className="font-bold text-lg mb-4 text-accent">{page.url_path}</h3>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
               <div>
                 <label className="block text-sm font-medium mb-1">Title (Заголовок)</label>
                 <input
@@ -94,7 +94,19 @@ export default function SEOPage() {
               </div>
             </div>
 
-            <div className="flex items-center justify-between mt-4">
+            {/* Блок предпросмотра */}
+            <div className="mt-4 p-4 bg-muted rounded-lg border border-border">
+              <p className="text-xs text-muted-foreground mb-2">Предпросмотр в поиске:</p>
+              <div className="text-[#1a0dab] dark:text-[#8ab4f8] text-xl font-medium mb-1 truncate">
+                {page.title || 'Заголовок страницы'}
+              </div>
+              <div className="text-green-800 dark:text-[#81c995] text-sm truncate">mahachkala-mebel.ru{page.url_path}</div>
+              <div className="text-foreground/80 text-sm mt-1">
+                {page.meta_description || 'Здесь будет описание страницы, которое привлечет пользователя...'}
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between mt-6">
               <label className="flex items-center gap-2">
                 <input
                   type="checkbox"
