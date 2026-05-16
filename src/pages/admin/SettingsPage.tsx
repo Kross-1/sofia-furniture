@@ -12,7 +12,7 @@ export default function SettingsPage() {
 
   const [siteName, setSiteName] = useState('Мебельный салон "Сафия"');
   const [siteDescription, setSiteDescription] = useState(
-    'Широкий ассортимент качественной мебели и ковров ручной работы. Более 5 лет радуем жителей Махачкалы стильными решениями для дома.'
+    'Широкий ассортимент качественной мебели и ковров ручной работы. Более 10 лет радуем жителей Махачкалы стильными решениями для дома.'
   );
   const [contactEmail, setContactEmail] = useState('info@sofia.ru');
   const [isSaving, setIsSaving] = useState(false);
