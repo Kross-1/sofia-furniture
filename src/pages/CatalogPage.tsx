@@ -130,7 +130,7 @@ export default function CatalogPage() {
                 <MenuIcon open={isFilterOpen} className="w-6 h-6" />
               </button>
               <PageH1
-                fallback="Каталог"
+                fallback={getText('catalog-title')}
                 className="font-serif text-3xl md:text-4xl font-bold text-foreground"
               />
             </div>
