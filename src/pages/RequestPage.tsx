@@ -31,6 +31,7 @@ interface Request {
 
 const REQUESTS_STORAGE_KEY = 'sofia_furniture_requests';
 const MESSAGES_STORAGE_KEY = 'sofia_messages';
+// These keys are no longer used for state management in RequestPage but left for compatibility if needed.
 
 export default function RequestPage() {
   const { getText } = usePageContent();
@@ -60,37 +61,10 @@ export default function RequestPage() {
   };
 
   const saveRequest = (data: FormData, product: typeof selectedProduct) => {
-    const requests: Request[] = JSON.parse(localStorage.getItem(REQUESTS_STORAGE_KEY) || '[]');
-    const newRequest: Request = {
-      id: `req-${Date.now()}`,
-      name: data.name,
-      phone: data.phone,
-      comment: data.comment,
-      productId: product?.id,
-      productName: product?.name,
-      productPrice: product?.price,
-      date: new Date().toISOString(),
-      status: 'new'
-    };
-    requests.unshift(newRequest);
-    if (requests.length > 100) {
-      requests.pop();
-    }
-    localStorage.setItem(REQUESTS_STORAGE_KEY, JSON.stringify(requests));
-
-    const messages: Request[] = JSON.parse(localStorage.getItem(MESSAGES_STORAGE_KEY) || '[]');
-    messages.unshift(newRequest);
-    if (messages.length > 100) {
-      messages.pop();
-    }
-    localStorage.setItem(MESSAGES_STORAGE_KEY, JSON.stringify(messages));
-
     const productInfo = product ? `${product.name} (${product.price} ₽)` : undefined;
     saveMessage(data.name, data.phone, data.comment || undefined, productInfo).catch(() => {});
 
-    const notificationEmail = localStorage.getItem('sofia_contact_email') || 'info@sofia.ru';
-    console.log(`Email notification would be sent to: ${notificationEmail}`);
-    console.log('New request:', newRequest);
+    console.log('New request saved to DB');
   };
 
   const validateForm = () => {

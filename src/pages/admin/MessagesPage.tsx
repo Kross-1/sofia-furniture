@@ -38,11 +38,8 @@ export default function MessagesPage() {
           productName: msg.productName || msg.product,
           productPrice: msg.productPrice,
         })));
-      } catch {
-        const saved = localStorage.getItem('sofia_messages');
-        if (saved) {
-          setMessages(JSON.parse(saved));
-        }
+      } catch (e) {
+        console.error('Failed to load messages:', e);
       }
     };
     load();
@@ -56,22 +53,18 @@ export default function MessagesPage() {
   const markAsRead = (id: string) => {
     updateMessageStatus(id, 'read').catch(() => {});
     setMessages(prev => {
-      const updated = prev.map(msg =>
+      return prev.map(msg =>
         msg.id === id ? { ...msg, status: 'read' as const } : msg
       );
-      localStorage.setItem('sofia_messages', JSON.stringify(updated));
-      return updated;
     });
   };
 
   const markAsResponded = (id: string) => {
     updateMessageStatus(id, 'responded').catch(() => {});
     setMessages(prev => {
-      const updated = prev.map(msg =>
+      return prev.map(msg =>
         msg.id === id ? { ...msg, status: 'responded' as const } : msg
       );
-      localStorage.setItem('sofia_messages', JSON.stringify(updated));
-      return updated;
     });
   };
 
@@ -81,9 +74,7 @@ export default function MessagesPage() {
       deleteMessageAPI(id).catch(() => {});
       addChangeLog(user?.email || 'Unknown', 'Удаление сообщения', `От: ${msg?.name || 'Unknown'}`);
       setMessages(prev => {
-        const updated = prev.filter(msg => msg.id !== id);
-        localStorage.setItem('sofia_messages', JSON.stringify(updated));
-        return updated;
+        return prev.filter(msg => msg.id !== id);
       });
       if (selectedMessage?.id === id) {
         setSelectedMessage(null);

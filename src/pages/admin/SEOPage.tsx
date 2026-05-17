@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Save, RefreshCw } from 'lucide-react';
+import { usePageContent } from '../../hooks/usePageContent';
 
 interface SEOPage {
   id: string;
@@ -10,10 +11,19 @@ interface SEOPage {
   is_indexed: boolean;
 }
 
+const h1KeyMap: Record<string, string> = {
+  '/': 'home-hero-title',
+  '/about': 'about-title',
+  '/catalog': 'catalog-title',
+  '/contacts': 'contacts-title',
+  '/request': 'request-title'
+};
+
 export default function SEOPage() {
   const [pages, setPages] = useState<SEOPage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [savingId, setSavingId] = useState<string | null>(null);
+  const { getText } = usePageContent();
 
   useEffect(() => {
     loadSEO();
@@ -55,6 +65,11 @@ export default function SEOPage() {
     }
   };
 
+  const getFallbackH1 = (path: string) => {
+    const key = h1KeyMap[path];
+    return key ? getText(key) : 'Заголовок H1';
+  };
+
   return (
     <div>
       <h1 className="font-serif text-2xl font-bold text-foreground mb-6">Настройка SEO страниц</h1>
@@ -91,6 +106,7 @@ export default function SEOPage() {
                   value={page.h1_header || ''}
                   onChange={(e) => setPages(p => p.map(item => item.id === page.id ? {...item, h1_header: e.target.value} : item))}
                   className="input-field"
+                  placeholder={getFallbackH1(page.url_path)}
                 />
               </div>
               <div className="md:col-span-2">
@@ -121,7 +137,7 @@ export default function SEOPage() {
               <div className="p-4 bg-card rounded-lg border border-accent/20">
                 <p className="text-xs text-muted-foreground mb-2">Предпросмотр заголовка на сайте (H1):</p>
                 <h1 className="text-3xl font-bold text-foreground font-serif mt-2">
-                  {page.h1_header || 'Заголовок H1 на странице'}
+                  {page.h1_header || getFallbackH1(page.url_path)}
                 </h1>
               </div>
             </div>
