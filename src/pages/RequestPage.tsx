@@ -4,6 +4,7 @@ import { Send, CheckCircle, AlertCircle, Phone, ShoppingBag } from 'lucide-react
 import { usePageContent } from '../hooks/usePageContent';
 import { useSiteData } from '../contexts/SiteDataContext';
 import { saveMessage } from '../lib/db';
+import { PageH1 } from '../components/PageH1';
 
 interface FormData {
   name: string;
@@ -169,12 +170,11 @@ export default function RequestPage() {
             <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-green-500/15 border border-green-500/30 flex items-center justify-center">
               <CheckCircle className="w-10 h-10 text-green-500" />
             </div>
-            <h1
+            <PageH1
+              fallback={getText('request-success-title')}
               className="font-serif text-2xl md:text-3xl font-bold text-foreground mb-4"
               data-text="request-success-title"
-            >
-              {getText('request-success-title')}
-            </h1>
+            />
             <p className="text-muted-foreground mb-8" data-text="request-success-text">
               {getText('request-success-text')}
             </p>
@@ -196,12 +196,11 @@ export default function RequestPage() {
       <div className="container-custom">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1
+          <PageH1
+            fallback={getText('request-title')}
             className="font-serif text-3xl md:text-4xl font-bold text-foreground mb-4"
             data-text="request-title"
-          >
-            {getText('request-title')}
-          </h1>
+          />
           <p className="text-muted-foreground text-lg" data-text="request-subtitle">
             {getText('request-subtitle')}
           </p>

@@ -4,6 +4,7 @@ import { useAnalytics } from '../contexts/AnalyticsContext';
 import { usePageContent } from '../hooks/usePageContent';
 import { getMediaItems } from '../lib/db';
 import { useSocialNetworks, SocialIcon } from '../hooks/useSocialNetworks';
+import { PageH1 } from '../components/PageH1';
 
 const STORAGE_KEY = 'sofia_media_items';
 
@@ -60,12 +61,11 @@ export default function ContactsPage() {
     <main className="pt-24 pb-16 bg-background min-h-screen">
       <div className="container-custom">
         <div className="mb-12">
-          <h1
+          <PageH1
+            fallback={getText('contacts-title')}
             className="font-serif text-3xl md:text-4xl font-bold text-foreground mb-4"
             data-text="contacts-title"
-          >
-            {getText('contacts-title')}
-          </h1>
+          />
           <p className="text-muted-foreground text-lg" data-text="contacts-subtitle">
             {getText('contacts-subtitle')}
           </p>

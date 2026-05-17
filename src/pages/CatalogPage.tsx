@@ -7,6 +7,7 @@ import Filter from '../components/Filter';
 import MenuIcon from '../components/MenuIcon';
 import { Grid3X3, List } from 'lucide-react';
 import { Category } from '../data/products';
+import { PageH1 } from '../components/PageH1';
 
 export default function CatalogPage() {
   const { products, materials } = useSiteData();
@@ -128,9 +129,10 @@ export default function CatalogPage() {
               >
                 <MenuIcon open={isFilterOpen} className="w-6 h-6" />
               </button>
-              <h1 className="font-serif text-3xl md:text-4xl font-bold text-foreground">
-                Каталог
-              </h1>
+              <PageH1
+                fallback="Каталог"
+                className="font-serif text-3xl md:text-4xl font-bold text-foreground"
+              />
             </div>
             <p className="text-muted-foreground mt-3">
               Найдено товаров: {filteredProducts.length}

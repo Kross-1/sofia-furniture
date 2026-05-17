@@ -3,6 +3,7 @@ import { ArrowRight } from 'lucide-react';
 import { usePageContent } from '../hooks/usePageContent';
 import { useEffect, useState, useRef } from 'react';
 import { getMediaItems } from '../lib/db';
+import { PageH1 } from '../components/PageH1';
 
 
 
@@ -118,12 +119,11 @@ export default function HomePage() {
               <span className="w-2 h-2 bg-accent rounded-full animate-pulse" />
               {getText('home-hero-badge')}
             </span>
-            <h1
+            <PageH1
+              fallback={getText('home-hero-title')}
               className="font-serif text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6 leading-tight"
               data-text="hero-title"
-            >
-              {getText('home-hero-title')}
-            </h1>
+            />
             <p className="text-lg md:text-xl text-muted-foreground mb-8 leading-relaxed" data-text="hero-subtitle">
               {getText('home-hero-subtitle')}
             </p>

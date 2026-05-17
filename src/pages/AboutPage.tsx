@@ -2,6 +2,7 @@ import { Check, Heart, Star, Users } from 'lucide-react';
 import { usePageContent } from '../hooks/usePageContent';
 import { useEffect, useState } from 'react';
 import { getMediaItems } from '../lib/db';
+import { PageH1 } from '../components/PageH1';
 
 const features = [
   { icon: Heart, titleKey: 'about-adv-style', descKey: 'about-adv-style-desc' },
@@ -96,12 +97,11 @@ export default function AboutPage() {
               >
                 {getText('about-badge')}
               </span>
-              <h1
+              <PageH1
+                fallback={getText('about-title')}
                 className="font-serif text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-6 leading-tight"
                 data-text="about-title"
-              >
-                {getText('about-title')}
-              </h1>
+              />
               <p className="text-lg text-muted-foreground mb-6 leading-relaxed" data-text="about-text-1">
                 {getText('about-text-1')}
               </p>
