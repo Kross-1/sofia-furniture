@@ -109,10 +109,11 @@ function ImageUploader({
       if (result.success) {
         onChange(result.data.url);
       } else {
-        throw new Error(result.error?.message || 'Ошибка загрузки');
+        console.error('ImgBB API Error:', result);
+        throw new Error(result.error?.message || 'Ошибка загрузки ImgBB');
       }
     } catch (e) {
-      console.error(e);
+      console.error('Fetch error details:', e);
       setPreviewError(true);
       alert('Ошибка при загрузке: ' + e);
     }
