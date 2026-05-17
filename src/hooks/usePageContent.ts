@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
-import { saveSiteSetting, getSiteSettings } from '../lib/db';
+import { saveSiteSetting, getSiteSettings, dataEvents } from '../lib/db';
 
 export interface PageTextItem {
   id: string;
@@ -193,18 +193,6 @@ const pageTexts: PageTextItem[] = [
 
 const allDefaultTexts: PageTextItem[] = [...globalTexts, ...pageTexts];
 
-export function usePageContent() {
-  const [texts, setTexts] = useState<PageTextItem[]>(allDefaultTexts);
-  const [icons] = useState<IconItem[]>(defaultIcons);
-  const [categories] = useState<CategoryItem[]>(defaultCategories);
-  const [productCategories] = useState<ProductCategoryItem[]>(defaultProductCategories);
-  const [isLoaded, setIsLoaded] = useState(false);
-
-import { useState, useCallback, useMemo, useEffect } from 'react';
-import { saveSiteSetting, getSiteSettings, dataEvents } from '../lib/db';
-
-// ... (оставляем типы как есть)
-
 // Единое состояние
 let sharedTexts: PageTextItem[] = allDefaultTexts;
 const listeners = new Set<(texts: PageTextItem[]) => void>();
@@ -259,6 +247,17 @@ export function usePageContent() {
     reloadData();
   }, [isLoaded, reloadData]);
 
+  const getText = useCallback((id: string): string => {
+    const item = texts.find(t => t.id === id);
+    if (item) {
+      if (id === 'footer-copyright' || id === 'common-copyright') {
+        return item.text.replace('{year}', new Date().getFullYear().toString());
+      }
+      return item.text;
+    }
+    return '';
+  }, [texts]);
+
   const updateText = useCallback(async (id: string, newText: string) => {
     try {
       await saveSiteSetting(id, newText);
@@ -274,34 +273,6 @@ export function usePageContent() {
       alert('Не удалось сохранить текст');
     }
   }, []);
-
-
-
-  // Load texts from DB on mount
-  useEffect(() => {
-    reloadData();
-    
-    // Listen for data changes
-    const handleDataChange = () => {
-      reloadData();
-    };
-    dataEvents.addEventListener('data-changed', handleDataChange);
-    return () => dataEvents.removeEventListener('data-changed', handleDataChange);
-  }, [reloadData]);
-
-  // ... остальная часть хука
-
-
-  const getText = useCallback((id: string): string => {
-    const item = texts.find(t => t.id === id);
-    if (item) {
-      if (id === 'footer-copyright' || id === 'common-copyright') {
-        return item.text.replace('{year}', new Date().getFullYear().toString());
-      }
-      return item.text;
-    }
-    return '';
-  }, [texts]);
 
   const getTextsForPage = useCallback((pageName: string): PageTextItem[] => {
     const filtered = texts.filter(t => {
@@ -325,16 +296,6 @@ export function usePageContent() {
         : texts.filter(t => t.isGlobal && t.locations?.some(loc => loc.includes(page))).length,
     }));
   }, [texts, getTextsForPage]);
-
-  const updateText = useCallback(async (id: string, newText: string) => {
-    try {
-      await saveSiteSetting(id, newText);
-      setTexts(prev => prev.map(t => t.id === id ? { ...t, text: newText } : t));
-    } catch (e) {
-      console.error('Ошибка сохранения:', e);
-      alert('Не удалось сохранить текст');
-    }
-  }, []);
 
   const getIconsByCategory = useCallback((category: string): IconItem[] => {
     return icons.filter(icon => icon.category === category).sort((a, b) => a.order - b.order);
