@@ -1,6 +1,7 @@
 ﻿import { useState, useRef, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Home, FileText, Phone, Save, Image as ImageIcon, Upload, X, Link2, CheckCircle2, Film } from 'lucide-react';
+import { api } from '@/lib/api';
 
 type PageSection = 'home' | 'about' | 'contacts';
 

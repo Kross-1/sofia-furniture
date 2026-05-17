@@ -74,25 +74,25 @@ export function usePageContent() {
   const getIcon = useCallback((id: string) => icons.find(i => i.id === id), [icons]);
   const getCategories = useCallback(() => categories, [categories]);
   const getTextsForPage = useCallback((page: string) => texts.filter(t => t.page === page), [texts]);
-  const findDuplicateTexts = useCallback(() => [], []);
+  const findDuplicateTexts = useCallback((id: string) => [], []);
   const resetToDefaults = useCallback(() => {}, []);
   const getAllPagesForEditor = useCallback(() => [], []);
-  const updateIcon = useCallback(() => {}, []);
-  const addIcon = useCallback(() => ({} as IconItem), []);
-  const deleteIcon = useCallback(() => {}, []);
+  const updateIcon = useCallback((id: string, updates: Partial<IconItem>) => {}, []);
+  const addIcon = useCallback((icon: Omit<IconItem, 'id'>) => ({} as IconItem), []);
+  const deleteIcon = useCallback((id: string) => {}, []);
   const resetIconsToDefaults = useCallback(() => {}, []);
-  const getIconsByCategory = useCallback(() => [], []);
-  const updateCategory = useCallback(() => {}, []);
-  const addCategory = useCallback(() => ({} as CategoryItem), []);
-  const deleteCategory = useCallback(() => {}, []);
+  const getIconsByCategory = useCallback((category: string) => [], []);
+  const updateCategory = useCallback((id: string, updates: Partial<CategoryItem>) => {}, []);
+  const addCategory = useCallback((category: Omit<CategoryItem, 'id'>) => ({} as CategoryItem), []);
+  const deleteCategory = useCallback((id: string) => {}, []);
   const resetCategoriesToDefaults = useCallback(() => {}, []);
-  const addProductCategory = useCallback(() => ({} as ProductCategoryItem), []);
-  const updateProductCategory = useCallback(() => {}, []);
-  const deleteProductCategory = useCallback(() => {}, []);
+  const addProductCategory = useCallback((cat: Omit<ProductCategoryItem, 'id'>) => ({} as ProductCategoryItem), []);
+  const updateProductCategory = useCallback((id: string, updates: Partial<ProductCategoryItem>) => {}, []);
+  const deleteProductCategory = useCallback((id: string) => {}, []);
   const resetProductCategoriesToDefaults = useCallback(() => {}, []);
   const getProductCategories = useCallback(() => productCategories, [productCategories]);
-  const syncProductCategoryFromHomepage = useCallback(() => ({} as ProductCategoryItem), []);
-  const unlinkProductCategoryFromHomepage = useCallback(() => {}, []);
+  const syncProductCategoryFromHomepage = useCallback((cat: CategoryItem) => ({} as ProductCategoryItem), []);
+  const unlinkProductCategoryFromHomepage = useCallback((id: string) => {}, []);
 
   return { 
     texts, getText, updateText, isLoading, 
