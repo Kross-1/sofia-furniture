@@ -205,9 +205,12 @@ import { saveSiteSetting, getSiteSettings, dataEvents } from '../lib/db';
 
 // ... (оставляем типы как есть)
 
-// Единое состояние для всего сайта
+// Единое состояние
 let sharedTexts: PageTextItem[] = allDefaultTexts;
 const listeners = new Set<(texts: PageTextItem[]) => void>();
+
+// Канал для связи между вкладками
+const channel = new BroadcastChannel('sofia_text_updates');
 
 export function usePageContent() {
   const [texts, setTexts] = useState<PageTextItem[]>(sharedTexts);
@@ -217,15 +220,26 @@ export function usePageContent() {
   useEffect(() => {
     const listener = (newTexts: PageTextItem[]) => setTexts(newTexts);
     listeners.add(listener);
-    return () => { listeners.delete(listener); };
+    
+    // Слушаем сигнал от других вкладок
+    const onMessage = (event: MessageEvent) => {
+      if (event.data === 'text-updated') {
+        reloadData();
+      }
+    };
+    channel.addEventListener('message', onMessage);
+
+    return () => { 
+      listeners.delete(listener); 
+      channel.removeEventListener('message', onMessage);
+    };
   }, []);
 
-  // Загрузка данных
-  useEffect(() => {
-    if (isLoaded) return;
-    getSiteSettings().then(dbSettings => {
+  const reloadData = useCallback(async () => {
+    try {
+      const dbSettings = await getSiteSettings();
       if (dbSettings && dbSettings.length > 0) {
-        sharedTexts = sharedTexts.map(t => {
+        sharedTexts = allDefaultTexts.map(t => {
           const found = dbSettings.find((s: any) => s.key === t.id);
           return found ? { ...t, text: found.value } : t;
         });
@@ -233,34 +247,34 @@ export function usePageContent() {
         listeners.forEach(l => l(sharedTexts));
       }
       setIsLoaded(true);
-    }).catch(() => {
+    } catch (e) {
+      console.error('Failed to reload data:', e);
       setIsLoaded(true);
-    });
-  }, [isLoaded]);
-
-  const getText = useCallback((id: string): string => {
-    const item = texts.find(t => t.id === id);
-    if (item) {
-      if (id === 'footer-copyright' || id === 'common-copyright') {
-        return item.text.replace('{year}', new Date().getFullYear().toString());
-      }
-      return item.text;
     }
-    return '';
-  }, [texts]);
+  }, []);
+
+  // Загрузка данных
+  useEffect(() => {
+    if (isLoaded) return;
+    reloadData();
+  }, [isLoaded, reloadData]);
 
   const updateText = useCallback(async (id: string, newText: string) => {
     try {
       await saveSiteSetting(id, newText);
-      // Обновляем общие данные и оповещаем всех
+      // Обновляем общие данные
       sharedTexts = sharedTexts.map(t => t.id === id ? { ...t, text: newText } : t);
       setTexts(sharedTexts);
       listeners.forEach(l => l(sharedTexts));
+      
+      // Посылаем сигнал всем вкладкам
+      channel.postMessage('text-updated');
     } catch (e) {
       console.error('Ошибка сохранения:', e);
       alert('Не удалось сохранить текст');
     }
   }, []);
+
 
 
   // Load texts from DB on mount
