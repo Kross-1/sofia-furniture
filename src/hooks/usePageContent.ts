@@ -200,20 +200,83 @@ export function usePageContent() {
   const [productCategories] = useState<ProductCategoryItem[]>(defaultProductCategories);
   const [isLoaded, setIsLoaded] = useState(false);
 
-  // Load texts from DB on mount
+import { useState, useCallback, useMemo, useEffect } from 'react';
+import { saveSiteSetting, getSiteSettings, dataEvents } from '../lib/db';
+
+// ... (оставляем типы как есть)
+
+// Единое состояние для всего сайта
+let sharedTexts: PageTextItem[] = allDefaultTexts;
+const listeners = new Set<(texts: PageTextItem[]) => void>();
+
+export function usePageContent() {
+  const [texts, setTexts] = useState<PageTextItem[]>(sharedTexts);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  // Подписка на обновление состояния
   useEffect(() => {
+    const listener = (newTexts: PageTextItem[]) => setTexts(newTexts);
+    listeners.add(listener);
+    return () => { listeners.delete(listener); };
+  }, []);
+
+  // Загрузка данных
+  useEffect(() => {
+    if (isLoaded) return;
     getSiteSettings().then(dbSettings => {
       if (dbSettings && dbSettings.length > 0) {
-        setTexts(prev => prev.map(t => {
+        sharedTexts = sharedTexts.map(t => {
           const found = dbSettings.find((s: any) => s.key === t.id);
           return found ? { ...t, text: found.value } : t;
-        }));
+        });
+        setTexts(sharedTexts);
+        listeners.forEach(l => l(sharedTexts));
       }
       setIsLoaded(true);
     }).catch(() => {
       setIsLoaded(true);
     });
+  }, [isLoaded]);
+
+  const getText = useCallback((id: string): string => {
+    const item = texts.find(t => t.id === id);
+    if (item) {
+      if (id === 'footer-copyright' || id === 'common-copyright') {
+        return item.text.replace('{year}', new Date().getFullYear().toString());
+      }
+      return item.text;
+    }
+    return '';
+  }, [texts]);
+
+  const updateText = useCallback(async (id: string, newText: string) => {
+    try {
+      await saveSiteSetting(id, newText);
+      // Обновляем общие данные и оповещаем всех
+      sharedTexts = sharedTexts.map(t => t.id === id ? { ...t, text: newText } : t);
+      setTexts(sharedTexts);
+      listeners.forEach(l => l(sharedTexts));
+    } catch (e) {
+      console.error('Ошибка сохранения:', e);
+      alert('Не удалось сохранить текст');
+    }
   }, []);
+
+
+  // Load texts from DB on mount
+  useEffect(() => {
+    reloadData();
+    
+    // Listen for data changes
+    const handleDataChange = () => {
+      reloadData();
+    };
+    dataEvents.addEventListener('data-changed', handleDataChange);
+    return () => dataEvents.removeEventListener('data-changed', handleDataChange);
+  }, [reloadData]);
+
+  // ... остальная часть хука
+
 
   const getText = useCallback((id: string): string => {
     const item = texts.find(t => t.id === id);
