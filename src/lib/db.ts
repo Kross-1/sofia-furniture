@@ -129,24 +129,88 @@ export async function deleteProductDB(id: number | string): Promise<void> {
   invalidateCache('Product');
 }
 
+const MEDIA_STORAGE_KEY = 'sofia_media_items';
+
+const loadMediaFromStorage = (page?: string): any[] => {
+  try {
+    const saved = localStorage.getItem(MEDIA_STORAGE_KEY);
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      const sections: string[] = page ? [page] : ['home', 'about', 'contacts'];
+      const result: any[] = [];
+      for (const section of sections) {
+        const items = parsed[section] || [];
+        for (const item of items) {
+          if (item.value) {
+            result.push({
+              id: `local-${section}-${item.key}`,
+              page: section,
+              section: item.key,
+              type: item.type || 'image',
+              url: item.value,
+              createdAt: new Date().toISOString(),
+            });
+          }
+        }
+      }
+      return result;
+    }
+  } catch {}
+  return [];
+};
+
 export async function getMediaItems(page?: string): Promise<any[]> {
   const key = page ? `MediaItem:${page}` : 'MediaItem';
   const params = page ? `?table=MediaItem&page=${page}` : '?table=MediaItem';
-  return fetchAPI(params, undefined, key);
+  try {
+    return await fetchAPI(params, undefined, key);
+  } catch {
+    return loadMediaFromStorage(page);
+  }
 }
 
 export async function saveMediaItem(page: string, section: string, type: string, url: string): Promise<any> {
-  const result = await fetchAPI('', {
-    method: 'POST',
-    body: JSON.stringify({ table: 'MediaItem', page, section, type, url }),
-  });
-  invalidateCache('MediaItem');
-  return result;
+  try {
+    const result = await fetchAPI('', {
+      method: 'POST',
+      body: JSON.stringify({ table: 'MediaItem', page, section, type, url }),
+    });
+    invalidateCache('MediaItem');
+    return result;
+  } catch {
+    try {
+      const saved = localStorage.getItem(MEDIA_STORAGE_KEY);
+      const parsed = saved ? JSON.parse(saved) : {};
+      if (!parsed[page]) parsed[page] = [];
+      const existing = parsed[page].find((item: any) => item.key === section);
+      if (existing) {
+        existing.value = url;
+        existing.type = type;
+      } else {
+        parsed[page].push({ key: section, label: section, value: url, type });
+      }
+      localStorage.setItem(MEDIA_STORAGE_KEY, JSON.stringify(parsed));
+    } catch {}
+    return { id: `local-${page}-${section}`, page, section, type, url };
+  }
 }
 
 export async function deleteMediaItem(id: string): Promise<void> {
-  await fetchAPI(`?table=MediaItem&id=${id}`, { method: 'DELETE' });
-  invalidateCache('MediaItem');
+  try {
+    await fetchAPI(`?table=MediaItem&id=${id}`, { method: 'DELETE' });
+    invalidateCache('MediaItem');
+  } catch {
+    try {
+      const saved = localStorage.getItem(MEDIA_STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        for (const page of Object.keys(parsed)) {
+          parsed[page] = parsed[page].filter((item: any) => `local-${page}-${item.key}` !== id);
+        }
+        localStorage.setItem(MEDIA_STORAGE_KEY, JSON.stringify(parsed));
+      }
+    } catch {}
+  }
 }
 
 export async function getMessages(): Promise<any[]> {
