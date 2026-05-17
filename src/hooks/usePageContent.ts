@@ -249,6 +249,7 @@ export function usePageContent() {
 
   const getText = useCallback((id: string): string => {
     const item = texts.find(t => t.id === id);
+    console.log(`getText(${id}) called, text: ${item?.text}`);
     if (item) {
       if (id === 'footer-copyright' || id === 'common-copyright') {
         return item.text.replace('{year}', new Date().getFullYear().toString());
