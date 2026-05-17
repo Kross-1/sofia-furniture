@@ -1,21 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Product, products as defaultProducts } from '../data/products';
-import { usePageContent } from '../hooks/usePageContent';
-import { Category } from '../data/products';
-
-// Default materials
-const defaultMaterials = [
-  'Дерево',
-  'МДФ',
-  'ДСП',
-  'Металл',
-  'Ткань',
-  'Кожа',
-  'Шерсть',
-  'Вискоза',
-  'Велюр',
-  'Замша',
-];
+import { Product } from '../data/products';
+import { api } from '../lib/api';
 
 interface SiteData {
   products: Product[];
@@ -33,65 +18,33 @@ interface SiteDataContextType {
   addMaterial: (material: string) => void;
   updateContent: (page: string, section: string, key: string, value: string) => void;
   resetData: () => void;
+  isLoading: boolean;
 }
 
 const SiteDataContext = createContext<SiteDataContextType | undefined>(undefined);
 
-const STORAGE_KEY = 'sofia_furniture_data';
-
 export function SiteDataProvider({ children }: { children: ReactNode }) {
-  const { getEnabledProductCategories } = usePageContent();
-
-  const [siteData, setSiteData] = useState<SiteData>(() => {
-    // Try to load from localStorage
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (stored) {
-      try {
-        return JSON.parse(stored);
-      } catch {
-        // If parsing fails, use default data
-      }
-    }
-
-    // Return default data structure
-    return {
-      products: defaultProducts,
-      materials: defaultMaterials,
-      content: {},
-    };
+  const [siteData, setSiteData] = useState<SiteData>({
+    products: [],
+    materials: [],
+    content: {},
   });
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Get dynamic categories from usePageContent
-  const categories: Category[] = getEnabledProductCategories().map((pc, index) => ({
-    id: pc.slug,
-    name: pc.name,
-    icon: 'Grid3X3',
-    sort_order: pc.order || index + 1,
-  }));
-
-  // Save to localStorage whenever data changes
   useEffect(() => {
-    try {
-      const dataStr = JSON.stringify(siteData);
-      if (dataStr.length > 4 * 1024 * 1024) {
-        console.warn('Site data too large, skipping localStorage save');
-        return;
-      }
-      localStorage.setItem(STORAGE_KEY, dataStr);
-    } catch (e) {
-      if (e instanceof DOMException && e.name === 'QuotaExceededError') {
-        console.warn('localStorage quota exceeded - data not saved');
-      }
-    }
-  }, [siteData]);
+    // Получаем данные из API (Postgres)
+    api.getProducts().then((data) => {
+      setSiteData(prev => ({ ...prev, products: data }));
+      setIsLoading(false);
+    }).catch(err => {
+        console.error("Failed to load products:", err);
+        setIsLoading(false);
+    });
+  }, []);
 
+  // Методы обновления теперь также должны отправлять данные в API
   const addProduct = (product: Omit<Product, 'id'>) => {
-    const newId = Math.max(0, ...siteData.products.map(p => p.id)) + 1;
-    const newProduct = { ...product, id: newId } as Product;
-    setSiteData(prev => ({
-      ...prev,
-      products: [...prev.products, newProduct],
-    }));
+    // В будущем - запрос к API для записи
   };
 
   const updateProduct = (id: number, updates: Partial<Product>) => {
@@ -111,12 +64,10 @@ export function SiteDataProvider({ children }: { children: ReactNode }) {
   };
 
   const addMaterial = (material: string) => {
-    if (!siteData.materials.includes(material)) {
-      setSiteData(prev => ({
-        ...prev,
-        materials: [...prev.materials, material],
-      }));
-    }
+    setSiteData(prev => ({
+      ...prev,
+      materials: [...prev.materials, material],
+    }));
   };
 
   const updateContent = (page: string, section: string, key: string, value: string) => {
@@ -133,27 +84,21 @@ export function SiteDataProvider({ children }: { children: ReactNode }) {
   };
 
   const resetData = () => {
-    const defaultData = {
-      products: defaultProducts,
-      materials: defaultMaterials,
-      content: {},
-    };
-    setSiteData(defaultData);
-    localStorage.removeItem(STORAGE_KEY);
+    // Перезагрузка страницы, чтобы сбросить стейт
+    window.location.reload();
   };
 
   return (
     <SiteDataContext.Provider
       value={{
-        products: siteData.products,
-        materials: siteData.materials,
-        content: siteData.content,
+        ...siteData,
         addProduct,
         updateProduct,
         deleteProduct,
         addMaterial,
         updateContent,
         resetData,
+        isLoading
       }}
     >
       {children}
