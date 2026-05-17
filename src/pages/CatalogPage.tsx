@@ -11,7 +11,7 @@ import { PageH1 } from '../components/PageH1';
 
 export default function CatalogPage() {
   const { products, materials } = useSiteData();
-  const { getEnabledProductCategories } = usePageContent();
+  const { getEnabledProductCategories, getText } = usePageContent();
   const [searchParams, setSearchParams] = useSearchParams();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);

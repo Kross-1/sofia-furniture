@@ -129,7 +129,7 @@ const pageTexts: PageTextItem[] = [
   { id: 'home-categories-subtitle', page: 'Главная', section: 'categories', label: 'Главная: Подзаголовок категорий', text: 'Выберите нужную категорию для просмотра товаров', htmlKey: '[data-text="categories-subtitle"]', order: 17 },
   { id: 'home-categories-btn', page: 'Главная', section: 'categories', label: 'Главная: Кнопка каталога', text: 'Смотреть весь каталог', htmlKey: '[data-text="categories-btn"]', order: 18 },
   { id: 'home-cta-title', page: 'Главная', section: 'cta', label: 'Главная: Заголовок призыва', text: 'Нужна консультация?', htmlKey: '[data-text="cta-title"]', order: 19 },
-  { id: 'home-cta-subtitle', page: 'Главная', section: 'cta', label: 'Главная: Подзаголовок призыва', text: 'Наши специалисты помогут подобрать мебель под ваш интерьер и бюджет. Оставьте заявку, и мы свяжемся с вами в ближайшее время.', htmlKey: '[data-text="cta-subtitle"]', order: 20 },
+  { id: 'home-cta-subtitle', page: 'Главная', section: 'cta', label: 'Главная: Подзаголовок призыва', text: 'Наши специалисты помогут подобрать мебель под ваш интерьер и бюджет. Оставьте заявку, и мы свяжемся с вами в ближайшее время.', htmlKey: '[data-text="home-cta-subtitle"]', order: 20 },
   { id: 'home-cta-btn', page: 'Главная', section: 'cta', label: 'Главная: Кнопка призыва', text: 'Оставить заявку', htmlKey: '[data-text="cta-btn"]', order: 21 },
   { id: 'catalog-title', page: 'Каталог', section: 'header', label: 'Каталог: Заголовок', text: 'Каталог', htmlKey: '[data-text="catalog-title"]', order: 1 },
   { id: 'catalog-subtitle', page: 'Каталог', section: 'header', label: 'Каталог: Подзаголовок', text: 'Найдено товаров', htmlKey: '[data-text="catalog-subtitle"]', order: 2 },
@@ -298,24 +298,24 @@ export function usePageContent() {
   }, [texts, getTextsForPage]);
 
   const getIconsByCategory = useCallback((category: string): IconItem[] => {
-    return icons.filter(icon => icon.category === category).sort((a, b) => a.order - b.order);
-  }, [icons]);
+    return defaultIcons.filter(icon => icon.category === category).sort((a, b) => a.order - b.order);
+  }, []);
 
   const getIcon = useCallback((id: string): IconItem | undefined => {
     return defaultIcons.find(i => i.id === id);
   }, []);
 
   const getCategories = useCallback((): CategoryItem[] => {
-    return [...categories].sort((a, b) => a.order - b.order);
-  }, [categories]);
+    return [...defaultCategories].sort((a, b) => a.order - b.order);
+  }, []);
 
   const getProductCategories = useCallback((): ProductCategoryItem[] => {
-    return [...productCategories].sort((a, b) => a.order - b.order);
-  }, [productCategories]);
+    return [...defaultProductCategories].sort((a, b) => a.order - b.order);
+  }, []);
 
   const getEnabledProductCategories = useCallback((): ProductCategoryItem[] => {
-    return productCategories.filter(c => c.enabled).sort((a, b) => a.order - b.order);
-  }, [productCategories]);
+    return defaultProductCategories.filter(c => c.enabled).sort((a, b) => a.order - b.order);
+  }, []);
 
   const updateCategory = useCallback((id: string, updates: Partial<CategoryItem>) => {}, []);
   const addCategory = useCallback((category: Omit<CategoryItem, 'id'>): CategoryItem => { return category as CategoryItem; }, []);
@@ -352,12 +352,12 @@ export function usePageContent() {
     getGlobalTexts,
     setTexts,
     getAllPagesForEditor,
-    icons,
+    icons: defaultIcons,
     getIconsByCategory,
     getIcon,
-    categories,
+    categories: defaultCategories,
     getCategories,
-    productCategories,
+    productCategories: defaultProductCategories,
     getProductCategories,
     getEnabledProductCategories,
     addProductCategory,
