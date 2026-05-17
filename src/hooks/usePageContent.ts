@@ -1,4 +1,5 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
+// @ts-ignore
 import { saveSiteSetting, getSiteSettings, dataEvents } from '../lib/db';
 
 export interface PageTextItem {
@@ -217,11 +218,20 @@ export function usePageContent() {
     };
     channel.addEventListener('message', onMessage);
 
+    // Обновляем при переключении вкладки
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        reloadData();
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+
     return () => { 
       listeners.delete(listener); 
       channel.removeEventListener('message', onMessage);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
     };
-  }, []);
+  }, [reloadData]);
 
   const reloadData = useCallback(async () => {
     try {
