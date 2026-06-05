@@ -1,48 +1,45 @@
+import net from 'node:net';
+import tls from 'node:tls';
+
 export default async function handler(req, res) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
   const out = {
     region: process.env.VERCEL_REGION,
-    runtime: process.env.VERCEL_RUNTIME,
     node: process.version,
   };
 
-  // Test 1: outbound HTTP to example.com
-  try {
+  const targets = [
+    { name: 'prisma-5432', host: 'db.prisma.io', port: 5432 },
+    { name: 'prisma-443',  host: 'db.prisma.io', port: 443 },
+    { name: 'google-443',  host: 'www.google.com', port: 443 },
+    { name: 'neon-5432',   host: 'ep-cool-forest-123456.us-east-2.aws.neon.tech', port: 5432 },
+    { name: 'supabase-5432', host: 'aws-0-eu-central-1.pooler.supabase.com', port: 5432 },
+  ];
+
+  out.tcp = [];
+  for (const t of targets) {
     const t0 = Date.now();
-    const r = await fetch('https://example.com', { signal: AbortSignal.timeout(10000) });
-    out.example_com = { ok: r.ok, status: r.status, ms: Date.now() - t0 };
-  } catch (e) {
-    out.example_com = { err: e.message };
+    const result = await new Promise((resolve) => {
+      const sock = new net.Socket();
+      let done = false;
+      const finish = (data) => { if (done) return; done = true; try { sock.destroy(); } catch {} resolve(data); };
+      sock.setTimeout(8000);
+      sock.once('connect', () => finish({ ok: true, ms: Date.now() - t0 }));
+      sock.once('timeout', () => finish({ ok: false, err: 'timeout', ms: Date.now() - t0 }));
+      sock.once('error', (e) => finish({ ok: false, err: e.code || e.message, ms: Date.now() - t0 }));
+      try { sock.connect(t.port, t.host); } catch (e) { finish({ ok: false, err: e.message }); }
+    });
+    out.tcp.push({ ...t, ...result });
   }
 
-  // Test 2: outbound HTTP to Prisma DB
-  const prismaUrl = process.env.PRISMA_DATABASE_URL;
-  if (prismaUrl) {
-    try {
-      const u = new URL(prismaUrl.replace('postgres://', 'http://').replace('postgresql://', 'http://'));
-      out.prisma_host = u.host;
-      const t0 = Date.now();
-      const r = await fetch(`http://${u.host}/`, { signal: AbortSignal.timeout(8000) });
-      out.prisma_http = { ok: r.ok, status: r.status, ms: Date.now() - t0 };
-    } catch (e) {
-      out.prisma_http = { err: e.message, name: e.name };
-    }
-  } else {
-    out.prisma_host = 'NO PRISMA URL';
-  }
-
-  // Test 3: pg client with short timeout
+  // Try resolve hostname to IP
   try {
-    const pg = await import('pg');
-    const t0 = Date.now();
-    const c = new pg.default.Client({ connectionString: prismaUrl, connectionTimeoutMillis: 8000 });
-    await c.connect();
-    const r = await c.query('SELECT 1 as ok');
-    out.pg_test = { ok: true, ms: Date.now() - t0, row: r.rows[0] };
-    await c.end();
+    const dns = await import('node:dns/promises');
+    const addrs = await dns.resolve4('db.prisma.io');
+    out.dns_prisma = addrs;
   } catch (e) {
-    out.pg_test = { err: e.message, code: e.code, name: e.name };
+    out.dns_prisma_err = e.message;
   }
 
   res.status(200).json(out);
