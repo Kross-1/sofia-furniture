@@ -20,7 +20,7 @@ interface Request {
   name: string;
   phone: string;
   comment: string;
-  productId?: number;
+  productId?: string;
   productName?: string;
   productPrice?: number;
   date: string;
@@ -46,7 +46,7 @@ export default function RequestPage() {
   const productId = searchParams.get('product');
   const selectedProduct = useMemo(() => {
     if (!productId) return null;
-    return products.find(p => p.id === Number(productId)) || null;
+    return products.find(p => p.id === productId) || null;
   }, [productId, products]);
 
   const formatPrice = (price: number) => {

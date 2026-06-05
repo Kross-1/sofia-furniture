@@ -2,103 +2,195 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { api } from '@/lib/api';
 
 // Типы
-export interface PageTextItem { id: string; page: string; section: string; label: string; text: string; htmlKey: string; isGlobal?: boolean; locations?: string[]; order?: number; }
-export interface IconItem { id: string; name: string; category: string; iconType: string; location: string; color: string; order: number; }
-export interface CategoryItem { id: string; name: string; iconType: string; iconUrl?: string; link: string; order: number; }
-export interface ProductCategoryItem { id: string; name: string; slug: string; enabled: boolean; linkedFromHomepage: boolean; homepageCategoryId?: string; order: number; }
+export interface PageTextItem {
+  id: string;
+  page: string;
+  section: string;
+  label: string;
+  text: string;
+  htmlKey: string;
+  isGlobal?: boolean;
+  locations?: string[];
+  order?: number;
+}
 
-// Дефолтные данные
-export const defaultCategories: CategoryItem[] = [
-  { id: 'spalnya', name: 'Спальные гарнитуры', iconType: 'Спальные гарнитуры.png', link: '/catalog?category=spalnya', order: 1 },
-  { id: 'tv-tumby', name: 'ТВ тумбы', iconType: 'Тв тумба.png', link: '/catalog?category=tv-tumby', order: 2 },
-  { id: 'konsoli', name: 'Консоли', iconType: 'Консоль.png', link: '/catalog?category=konsoli', order: 3 },
-  { id: 'stoly', name: 'Столы', iconType: 'Столы.png', link: '/catalog?category=stoly', order: 4 },
-  { id: 'stulya', name: 'Стулья', iconType: 'Стулья.png', link: '/catalog?category=stulya', order: 5 },
-  { id: 'holly', name: 'Холлы', iconType: 'Холлы.png', link: '/catalog?category=holly', order: 6 },
-  { id: 'divany', name: 'Диваны', iconType: 'Диваны.png', link: '/catalog?category=divany', order: 7 },
-];
+export interface IconItem {
+  id: string;
+  name: string;
+  category: string;
+  iconType: string;
+  location: string;
+  color: string;
+  order: number;
+}
 
-export const defaultProductCategories: ProductCategoryItem[] = [
-  { id: 'pc-spalnya', name: 'Спальные гарнитуры', slug: 'spalnya', enabled: true, linkedFromHomepage: true, homepageCategoryId: 'spalnya', order: 1 },
-  { id: 'pc-tv-tumby', name: 'ТВ тумбы', slug: 'tv-tumby', enabled: true, linkedFromHomepage: true, homepageCategoryId: 'tv-tumby', order: 2 },
-  { id: 'pc-konsoli', name: 'Консоли', slug: 'konsoli', enabled: true, linkedFromHomepage: true, homepageCategoryId: 'konsoli', order: 3 },
-  { id: 'pc-stoly', name: 'Столы', slug: 'stoly', enabled: true, linkedFromHomepage: true, homepageCategoryId: 'stoly', order: 4 },
-  { id: 'pc-stulya', name: 'Стулья', slug: 'stulya', enabled: true, linkedFromHomepage: true, homepageCategoryId: 'stulya', order: 5 },
-  { id: 'pc-holly', name: 'Холлы', slug: 'holly', enabled: true, linkedFromHomepage: true, homepageCategoryId: 'holly', order: 6 },
-  { id: 'pc-divany', name: 'Диваны', slug: 'divany', enabled: true, linkedFromHomepage: true, homepageCategoryId: 'divany', order: 7 },
-];
+export interface CategoryItem {
+  id: string;
+  name: string;
+  iconType: string;
+  iconUrl?: string;
+  link: string;
+  order: number;
+  iconFile?: string | null;
+  slug?: string;
+}
 
-export const defaultIcons: IconItem[] = [
-  { id: 'icon-adv-quality', name: 'Качество', category: 'advantages', iconType: 'Качество.png', location: 'Главная: Преимущества - Качество', color: '#A88B7D', order: 1 },
-  { id: 'icon-adv-price', name: 'Доступные цены', category: 'advantages', iconType: 'Доступные цены.png', location: 'Главная: Преимущества - Доступные цены', color: '#A88B7D', order: 2 },
-  { id: 'icon-adv-delivery', name: 'Доставка', category: 'advantages', iconType: 'Доставка.png', location: 'Главная: Преимущества - Доставка', color: '#A88B7D', order: 3 },
-  { id: 'icon-adv-warranty', name: 'Гарантия', category: 'advantages', iconType: 'Гарантия.png', location: 'Главная: Преимущества - Гарантия', color: '#A88B7D', order: 4 },
-];
-
-export const allDefaultTexts: PageTextItem[] = []; // Заполните при необходимости
+export interface ProductCategoryItem {
+  id: string;
+  name: string;
+  slug: string;
+  enabled: boolean;
+  linkedFromHomepage: boolean;
+  homepageCategoryId?: string;
+  order: number;
+}
 
 export function usePageContent() {
-  const [texts, setTexts] = useState<PageTextItem[]>(allDefaultTexts);
-  const [icons, setIcons] = useState<IconItem[]>(defaultIcons);
-  const [categories, setCategories] = useState<CategoryItem[]>(defaultCategories);
-  const [productCategories, setProductCategories] = useState<ProductCategoryItem[]>(defaultProductCategories);
+  const [texts, setTexts] = useState<PageTextItem[]>([]);
+  const [icons, setIcons] = useState<IconItem[]>([]);
+  const [categories, setCategories] = useState<CategoryItem[]>([]);
+  const [productCategories, setProductCategories] = useState<ProductCategoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    api.getContent().then(data => {
-      if (data && Array.isArray(data)) {
-        setTexts(prev => prev.map(item => {
-          const found = data.find((d: any) => d.item_key === item.id);
-          return found ? { ...item, text: found.item_value } : item;
+    let cancelled = false;
+    (async () => {
+      try {
+        const [content, cats] = await Promise.all([
+          api.getContent(),
+          api.getCategories().catch(() => []),
+        ]);
+        if (cancelled) return;
+
+        const list: PageTextItem[] = Array.isArray(content)
+          ? content.map((d: any) => {
+              const id = d.item_key || d.key;
+              const page = d.page || (id ? id.split('-')[0] : '');
+              const section = d.section || '';
+              return {
+                id,
+                page,
+                section,
+                label: id,
+                text: d.item_value ?? d.value ?? '',
+                htmlKey: id,
+              };
+            })
+          : [];
+        setTexts(list);
+
+        const cList: CategoryItem[] = Array.isArray(cats)
+          ? cats.map((c: any, i: number) => ({
+              id: c.id,
+              name: c.name,
+              iconType: c.iconFile || c.iconType || c.icon,
+              link: `/catalog?category=${encodeURIComponent(c.slug || c.name)}`,
+              order: typeof c.sortOrder === 'number' ? c.sortOrder : i + 1,
+              iconFile: c.iconFile,
+              slug: c.slug,
+            }))
+          : [];
+        setCategories(cList);
+
+        const pcList: ProductCategoryItem[] = cList.map((c, i) => ({
+          id: c.id,
+          name: c.name,
+          slug: c.slug || c.name,
+          enabled: true,
+          linkedFromHomepage: true,
+          homepageCategoryId: c.id,
+          order: c.order ?? i + 1,
         }));
+        setProductCategories(pcList);
+
+        setError(null);
+      } catch (e: any) {
+        if (!cancelled) {
+          console.error('usePageContent load error:', e?.message);
+          setError(e?.message || 'load error');
+        }
+      } finally {
+        if (!cancelled) setIsLoading(false);
       }
-      setIsLoading(false);
-    });
+    })();
+    return () => { cancelled = true; };
   }, []);
+
+  const textMap = useMemo(() => {
+    const m = new Map<string, string>();
+    for (const t of texts) m.set(t.id, t.text);
+    return m;
+  }, [texts]);
+
+  const getText = useCallback((id: string): string => textMap.get(id) ?? '', [textMap]);
 
   const updateText = useCallback(async (id: string, newText: string) => {
     setTexts(prev => prev.map(t => t.id === id ? { ...t, text: newText } : t));
-    const item = allDefaultTexts.find(t => t.id === id);
-    if (item) {
-      await api.saveContent({ page_section: item.page, item_key: id, item_value: newText });
+    try {
+      await api.saveContent({ item_key: id, item_value: newText });
+    } catch (e) {
+      console.error('saveContent failed', e);
     }
   }, []);
 
-  const getText = useCallback((id: string): string => {
-    const item = texts.find(t => t.id === id);
-    return item ? item.text : '';
-  }, [texts]);
-
-  // Восстановленные методы, чтобы админка не падала
-  const getEnabledProductCategories = useCallback(() => productCategories.filter(c => c.enabled), [productCategories]);
   const getIcon = useCallback((id: string) => icons.find(i => i.id === id), [icons]);
-  const getCategories = useCallback(() => categories, [categories]);
-  const getTextsForPage = useCallback((page: string) => texts.filter(t => t.page === page), [texts]);
-  const findDuplicateTexts = useCallback((id: string) => [], []);
-  const resetToDefaults = useCallback(() => {}, []);
-  const getAllPagesForEditor = useCallback(() => [], []);
-  const updateIcon = useCallback((id: string, updates: Partial<IconItem>) => {}, []);
-  const addIcon = useCallback((icon: Omit<IconItem, 'id'>) => ({} as IconItem), []);
-  const deleteIcon = useCallback((id: string) => {}, []);
-  const resetIconsToDefaults = useCallback(() => {}, []);
-  const getIconsByCategory = useCallback((category: string) => [], []);
-  const updateCategory = useCallback((id: string, updates: Partial<CategoryItem>) => {}, []);
-  const addCategory = useCallback((category: Omit<CategoryItem, 'id'>) => ({} as CategoryItem), []);
-  const deleteCategory = useCallback((id: string) => {}, []);
-  const resetCategoriesToDefaults = useCallback(() => {}, []);
-  const addProductCategory = useCallback((cat: Omit<ProductCategoryItem, 'id'>) => ({} as ProductCategoryItem), []);
-  const updateProductCategory = useCallback((id: string, updates: Partial<ProductCategoryItem>) => {}, []);
-  const deleteProductCategory = useCallback((id: string) => {}, []);
-  const resetProductCategoriesToDefaults = useCallback(() => {}, []);
-  const getProductCategories = useCallback(() => productCategories, [productCategories]);
-  const syncProductCategoryFromHomepage = useCallback((cat: CategoryItem) => ({} as ProductCategoryItem), []);
-  const unlinkProductCategoryFromHomepage = useCallback((id: string) => {}, []);
 
-  return { 
-    texts, getText, updateText, isLoading, 
-    icons, updateIcon, addIcon, deleteIcon, resetIconsToDefaults, getIconsByCategory, getIcon,
-    categories, updateCategory, addCategory, deleteCategory, resetCategoriesToDefaults, getCategories,
-    productCategories, addProductCategory, updateProductCategory, deleteProductCategory, resetProductCategoriesToDefaults, getProductCategories, getEnabledProductCategories, syncProductCategoryFromHomepage, unlinkProductCategoryFromHomepage,
-    getTextsForPage, findDuplicateTexts, resetToDefaults, getAllPagesForEditor
+  const getCategories = useCallback(() => categories, [categories]);
+
+  const getProductCategories = useCallback(() => productCategories, [productCategories]);
+
+  const getEnabledProductCategories = useCallback(
+    () => productCategories.filter(c => c.enabled),
+    [productCategories]
+  );
+
+  const getTextsForPage = useCallback(
+    (page: string) => texts.filter(t => t.page === page),
+    [texts]
+  );
+
+  // Стабы для совместимости со старой админкой
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const noop = useCallback((..._args: any[]) => {}, []);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const stubArr = useCallback((..._args: any[]) => [] as any[], []);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const stubIcon = useCallback((..._args: any[]) => undefined as any, []);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const stubCat = useCallback((..._args: any[]) => ({}) as any, []);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const stubPC = useCallback((..._args: any[]) => ({}) as any, []);
+
+  return {
+    // Данные
+    texts, getText, updateText, isLoading, error,
+    icons, getIcon,
+    categories, getCategories,
+    productCategories, getProductCategories, getEnabledProductCategories,
+    getTextsForPage,
+
+    // Совместимость со старой админкой
+    findDuplicateTexts: stubArr,
+    resetToDefaults: noop,
+    getAllPagesForEditor: stubArr,
+
+    updateIcon: noop,
+    addIcon: stubIcon,
+    deleteIcon: noop,
+    resetIconsToDefaults: noop,
+    getIconsByCategory: stubArr,
+
+    updateCategory: noop,
+    addCategory: stubCat,
+    deleteCategory: noop,
+    resetCategoriesToDefaults: noop,
+
+    addProductCategory: stubPC,
+    updateProductCategory: noop,
+    deleteProductCategory: noop,
+    resetProductCategoriesToDefaults: noop,
+    syncProductCategoryFromHomepage: stubPC,
+    unlinkProductCategoryFromHomepage: noop,
   };
 }

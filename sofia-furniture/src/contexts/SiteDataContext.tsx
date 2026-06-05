@@ -13,12 +13,13 @@ interface SiteDataContextType {
   materials: string[];
   content: Record<string, Record<string, string>>;
   addProduct: (product: Omit<Product, 'id'>) => void;
-  updateProduct: (id: number, product: Partial<Product>) => void;
-  deleteProduct: (id: number) => void;
+  updateProduct: (id: string, product: Partial<Product>) => void;
+  deleteProduct: (id: string) => void;
   addMaterial: (material: string) => void;
   updateContent: (page: string, section: string, key: string, value: string) => void;
   resetData: () => void;
   isLoading: boolean;
+  error: string | null;
 }
 
 const SiteDataContext = createContext<SiteDataContextType | undefined>(undefined);
@@ -30,24 +31,41 @@ export function SiteDataProvider({ children }: { children: ReactNode }) {
     content: {},
   });
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Получаем данные из API (Postgres)
-    api.getProducts().then((data) => {
-      setSiteData(prev => ({ ...prev, products: data }));
-      setIsLoading(false);
-    }).catch(err => {
-        console.error("Failed to load products:", err);
-        setIsLoading(false);
-    });
+    let cancelled = false;
+    (async () => {
+      try {
+        const data = await api.getProducts();
+        if (!cancelled) {
+          const list: Product[] = Array.isArray(data) ? data : [];
+          const matSet = new Set<string>();
+          for (const p of list) {
+            if (p.material) {
+              String(p.material).split(',').forEach(m => matSet.add(m.trim()));
+            }
+          }
+          setSiteData(prev => ({ ...prev, products: list, materials: Array.from(matSet).sort() }));
+          setError(null);
+        }
+      } catch (e: any) {
+        if (!cancelled) {
+          console.error('Failed to load products:', e?.message);
+          setError(e?.message || 'Failed to load products');
+        }
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
   }, []);
 
-  // Методы обновления теперь также должны отправлять данные в API
-  const addProduct = (product: Omit<Product, 'id'>) => {
-    // В будущем - запрос к API для записи
+  const addProduct = (_product: Omit<Product, 'id'>) => {
+    console.warn('addProduct: API write not implemented');
   };
 
-  const updateProduct = (id: number, updates: Partial<Product>) => {
+  const updateProduct = (id: string, updates: Partial<Product>) => {
     setSiteData(prev => ({
       ...prev,
       products: prev.products.map(p =>
@@ -56,7 +74,7 @@ export function SiteDataProvider({ children }: { children: ReactNode }) {
     }));
   };
 
-  const deleteProduct = (id: number) => {
+  const deleteProduct = (id: string) => {
     setSiteData(prev => ({
       ...prev,
       products: prev.products.filter(p => p.id !== id),
@@ -66,7 +84,7 @@ export function SiteDataProvider({ children }: { children: ReactNode }) {
   const addMaterial = (material: string) => {
     setSiteData(prev => ({
       ...prev,
-      materials: [...prev.materials, material],
+      materials: prev.materials.includes(material) ? prev.materials : [...prev.materials, material].sort(),
     }));
   };
 
@@ -77,14 +95,13 @@ export function SiteDataProvider({ children }: { children: ReactNode }) {
         ...prev.content,
         [page]: {
           ...(prev.content[page] || {}),
-          [key]: value,
+          [`${section}:${key}`]: value,
         },
       },
     }));
   };
 
   const resetData = () => {
-    // Перезагрузка страницы, чтобы сбросить стейт
     window.location.reload();
   };
 
@@ -98,7 +115,8 @@ export function SiteDataProvider({ children }: { children: ReactNode }) {
         addMaterial,
         updateContent,
         resetData,
-        isLoading
+        isLoading,
+        error,
       }}
     >
       {children}

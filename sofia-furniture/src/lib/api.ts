@@ -9,7 +9,7 @@ export const api = {
     return await response.json();
   },
 
-  saveContent: async (data: any) => {
+  saveContent: async (data) => {
     const response = await fetch(`${API_BASE}/content`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -23,5 +23,11 @@ export const api = {
     const response = await fetch(`${API_BASE}/products`);
     if (!response.ok) throw new Error('Failed to fetch products');
     return await response.json();
-  }
+  },
+
+  getCategories: async () => {
+    const response = await fetch(`${API_BASE}/categories`);
+    if (!response.ok) throw new Error('Failed to fetch categories');
+    return await response.json();
+  },
 };

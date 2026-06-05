@@ -126,7 +126,7 @@ export default function ProductsPage() {
     handleCloseModal();
   };
 
-  const handleDelete = (id: number) => {
+  const handleDelete = (id: string) => {
     if (confirm('Вы уверены, что хотите удалить этот товар?')) {
       deleteProduct(id);
     }
