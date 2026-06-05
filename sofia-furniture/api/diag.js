@@ -1,5 +1,7 @@
 import { createClient } from '@vercel/postgres';
 
+const TIMEOUT_MS = 15000;
+
 export default async function handler(req, res) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
@@ -17,8 +19,8 @@ export default async function handler(req, res) {
     try {
       const client = createClient({ connectionString: c.value });
       const r = await Promise.race([
-        client.query('SELECT 1 as ok'),
-        new Promise((_, rej) => setTimeout(() => rej(new Error('timeout 4000')), 4000))
+        client.query('SELECT 1 as ok, current_database() as db, inet_server_addr() as ip, version() as ver'),
+        new Promise((_, rej) => setTimeout(() => rej(new Error('timeout ' + TIMEOUT_MS)), TIMEOUT_MS))
       ]);
       out.push({ name: c.name, ok: true, ms: Date.now() - t0, row: r.rows?.[0] });
       await client.end();
@@ -26,5 +28,5 @@ export default async function handler(req, res) {
       out.push({ name: c.name, ok: false, ms: Date.now() - t0, err: e.message });
     }
   }
-  res.status(200).json(out);
+  res.status(200).json({ region: process.env.VERCEL_REGION, runtime: process.env.VERCEL_RUNTIME, results: out });
 }
