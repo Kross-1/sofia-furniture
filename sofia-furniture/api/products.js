@@ -1,12 +1,15 @@
-import { createClient } from '@vercel/postgres';
+import pkg from 'pg';
 
-const client = createClient({ connectionString: process.env.PRISMA_DATABASE_URL });
-const TIMEOUT_MS = 5000;
+const { Client } = pkg;
 
-const withTimeout = (p, ms, label) => Promise.race([
-  p,
-  new Promise((_, rej) => setTimeout(() => rej(new Error(`${label} timeout ${ms}ms`)), ms))
-]);
+function getClient() {
+  return new Client({
+    connectionString: process.env.PRISMA_DATABASE_URL,
+    ssl: { rejectUnauthorized: false },
+    connectionTimeoutMillis: 8000,
+    statement_timeout: 12000,
+  });
+}
 
 const QUERY = `
   SELECT
@@ -50,12 +53,16 @@ export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store, must-revalidate');
 
   if (req.method === 'GET') {
+    const client = getClient();
     try {
-      const { rows } = await withTimeout(client.query(QUERY), TIMEOUT_MS, 'products');
+      await client.connect();
+      const { rows } = await client.query(QUERY);
       return res.status(200).json(rows.map(mapRow));
-    } catch (error) {
-      console.error('products GET error:', error.message);
-      return res.status(500).json({ error: error.message });
+    } catch (e) {
+      console.error('products GET:', e.message);
+      return res.status(500).json({ error: e.message });
+    } finally {
+      await client.end().catch(() => {});
     }
   }
 
