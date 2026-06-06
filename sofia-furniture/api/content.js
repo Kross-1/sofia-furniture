@@ -1,8 +1,7 @@
 import pkg from 'pg';
-
 const { Client } = pkg;
 
-function getClient() {
+function makeClient() {
   return new Client({
     connectionString: process.env.PRISMA_DATABASE_URL,
     ssl: { rejectUnauthorized: false },
@@ -37,7 +36,7 @@ export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store, must-revalidate');
 
   if (req.method === 'GET') {
-    const client = getClient();
+    const client = makeClient();
     try {
       await client.connect();
       const { rows } = await client.query('SELECT key, value FROM "SiteSetting"');
@@ -55,7 +54,7 @@ export default async function handler(req, res) {
     if (!item_key || typeof item_value !== 'string') {
       return res.status(400).json({ error: 'item_key and item_value required' });
     }
-    const client = getClient();
+    const client = makeClient();
     try {
       await client.connect();
       await client.query(
